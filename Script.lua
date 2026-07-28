@@ -16,12 +16,15 @@ _G.TweenSpeed = 30
 _G.AvoidMurderer = true
 _G.AvoidMurdererDistance = 40
 
+_G.AutoKillEnabled = false
+
 _G.AimbotEnabled = false
 _G.AimbotTarget = "Murderer"
 _G.AimbotSmoothness = 0.2
 _G.AimbotFOV = 150
 
 _G.ESPEnabled = false
+_G.CoinESPEnabled = false
 _G.AutoPickupGun = false
 _G.NoclipEnabled = false
 _G.InfJumpEnabled = false
@@ -52,12 +55,11 @@ task.spawn(function()
     end
 end)
 
-
 -- Création de la fenêtre GUI Rayfield
 local Window = Rayfield:CreateWindow({
    Name = "MM2 Ultra Boosted — Onyx v68",
    LoadingTitle = "MM2 Onyx v68",
-   LoadingSubtitle = "by Onyx",
+   LoadingSubtitle = "par Onyx",
    ConfigurationSaving = {
       Enabled = true,
       FolderName = "OnyxMM2",
@@ -72,10 +74,11 @@ local Window = Rayfield:CreateWindow({
 })
 
 -- Onglets
-local MainTab = Window:CreateTab("Auto Farm & Kill", 4483362458)
+local FarmTab = Window:CreateTab("Auto Farm Pièces", 4483362458)
+local KillTab = Window:CreateTab("Tuer (Kill)", 4483362458)
 local CombatTab = Window:CreateTab("Combat & Aim", 4483362458)
-local VisualsTab = Window:CreateTab("Visuals & ESP", 4483362458)
-local MiscTab = Window:CreateTab("Misc & Mouvements", 4483362458)
+local VisualsTab = Window:CreateTab("Visuels & ESP", 4483362458)
+local MiscTab = Window:CreateTab("Mouvements & Misc", 4483362458)
 
 -- ==================== FONCTIONS UTILES ====================
 
@@ -134,6 +137,34 @@ local function getCoins()
     return coins
 end
 
+-- Créer un marqueur ESP pour une pièce / gemme
+local function createCoinESP(coinPart)
+    if not coinPart:FindFirstChild("OnyxCoinESP") then
+        local bgui = Instance.new("BillboardGui")
+        bgui.Name = "OnyxCoinESP"
+        bgui.AlwaysOnTop = true
+        bgui.Size = UDim2.new(0, 50, 0, 50)
+        bgui.Adornee = coinPart
+        bgui.Parent = coinPart
+        
+        local text = Instance.new("TextLabel")
+        text.BackgroundTransparency = 1
+        text.Size = UDim2.new(1, 0, 1, 0)
+        
+        local symbol = "🪙"
+        local parentName = coinPart.Parent and coinPart.Parent.Name or ""
+        if coinPart.Name:lower():find("gem") or parentName:lower():find("gem") then
+            symbol = "💎"
+        end
+        
+        text.Text = symbol
+        text.TextColor3 = symbol == "💎" and Color3.fromRGB(0, 255, 255) or Color3.fromRGB(255, 215, 0)
+        text.TextSize = 14
+        text.Font = Enum.Font.SourceSansBold
+        text.Parent = bgui
+    end
+end
+
 -- Tuer tout le monde (Murderer uniquement)
 local function killAllAsMurderer()
     local backpack = LocalPlayer:FindFirstChild("Backpack")
@@ -182,10 +213,10 @@ end
 
 -- ==================== CRÉATION DES ONGLETS CONTENU ====================
 
--- 1. AUTO FARM & KILL TAB
-MainTab:CreateSection("Auto Farm")
+-- 1. ONGLET AUTO FARM PIÈCES
+FarmTab:CreateSection("Configuration de l'Auto Farm")
 
-MainTab:CreateToggle({
+FarmTab:CreateToggle({
    Name = "Activer l'Auto Farm",
    CurrentValue = false,
    Flag = "AutoFarm",
@@ -194,7 +225,7 @@ MainTab:CreateToggle({
    end,
 })
 
-MainTab:CreateDropdown({
+FarmTab:CreateDropdown({
    Name = "Méthode de Farm",
    Options = {"Teleport", "Tween"},
    CurrentOption = {"Teleport"},
@@ -205,7 +236,7 @@ MainTab:CreateDropdown({
    end,
 })
 
-MainTab:CreateSlider({
+FarmTab:CreateSlider({
    Name = "Vitesse du Tween",
    Min = 10,
    Max = 100,
@@ -219,7 +250,7 @@ MainTab:CreateSlider({
    end,
 })
 
-MainTab:CreateToggle({
+FarmTab:CreateToggle({
    Name = "Éviter le Murderer",
    CurrentValue = true,
    Flag = "AvoidMurderer",
@@ -228,7 +259,7 @@ MainTab:CreateToggle({
    end,
 })
 
-MainTab:CreateSlider({
+FarmTab:CreateSlider({
    Name = "Distance d'évitement",
    Min = 10,
    Max = 150,
@@ -242,30 +273,64 @@ MainTab:CreateSlider({
    end,
 })
 
-MainTab:CreateSection("Actions Combat")
 
-MainTab:CreateButton({
-   Name = "Kill All (Si Murderer)",
+-- 2. ONGLET TUER (KILL)
+KillTab:CreateSection("Actions de Murderer")
+
+KillTab:CreateButton({
+   Name = "Tuer tout le monde (Instant)",
    Callback = function()
       killAllAsMurderer()
    end,
 })
 
-MainTab:CreateToggle({
-   Name = "Auto Ramasser le Pistolet",
+KillTab:CreateToggle({
+   Name = "Auto Kill en boucle (Si Murderer)",
    CurrentValue = false,
-   Flag = "AutoPickup",
+   Flag = "AutoKill",
    Callback = function(Value)
-      _G.AutoPickupGun = Value
+      _G.AutoKillEnabled = Value
+   end,
+})
+
+KillTab:CreateSection("Téléportations Rapides")
+
+KillTab:CreateButton({
+   Name = "Se téléporter au Murderer",
+   Callback = function()
+      local murderer = getMurderer()
+      if murderer and murderer.Character and murderer.Character:FindFirstChild("HumanoidRootPart") then
+         teleportTo(murderer.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 2))
+      else
+         Rayfield:Notify({Title = "Erreur", Content = "Murderer introuvable ou mort !", Duration = 3})
+      end
+   end,
+})
+
+KillTab:CreateButton({
+   Name = "Se téléporter au Sheriff",
+   Callback = function()
+      local sheriff = nil
+      for _, player in ipairs(Players:GetPlayers()) do
+         if getRole(player) == "Sheriff" then
+            sheriff = player
+            break
+         end
+      end
+      if sheriff and sheriff.Character and sheriff.Character:FindFirstChild("HumanoidRootPart") then
+         teleportTo(sheriff.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 2))
+      else
+         Rayfield:Notify({Title = "Erreur", Content = "Sheriff introuvable ou mort !", Duration = 3})
+      end
    end,
 })
 
 
--- 2. COMBAT & AIM TAB
-CombatTab:CreateSection("Aimbot (Lock Cam)")
+-- 3. ONGLET COMBAT & AIM
+CombatTab:CreateSection("Aimbot (Visée Assistée)")
 
 CombatTab:CreateToggle({
-   Name = "Activer l'Aimbot",
+   Name = "Activer l'Aimbot (Clic Droit)",
    CurrentValue = false,
    Flag = "AimbotEnabled",
    Callback = function(Value)
@@ -312,12 +377,23 @@ CombatTab:CreateSlider({
    end,
 })
 
+CombatTab:CreateSection("Assistance de Combat")
 
--- 3. VISUALS & ESP TAB
-VisualsTab:CreateSection("ESP Options")
+CombatTab:CreateToggle({
+   Name = "Auto Ramasser le Pistolet",
+   CurrentValue = false,
+   Flag = "AutoPickup",
+   Callback = function(Value)
+      _G.AutoPickupGun = Value
+   end,
+})
+
+
+-- 4. ONGLET VISUELS & ESP
+VisualsTab:CreateSection("Options d'ESP")
 
 VisualsTab:CreateToggle({
-   Name = "Activer l'ESP Rôles & Joueurs",
+   Name = "Activer l'ESP Joueurs & Rôles",
    CurrentValue = false,
    Flag = "ESPToggle",
    Callback = function(Value)
@@ -325,8 +401,17 @@ VisualsTab:CreateToggle({
    end,
 })
 
+VisualsTab:CreateToggle({
+   Name = "Activer l'ESP Pièces & Gemmes",
+   CurrentValue = false,
+   Flag = "CoinESPToggle",
+   Callback = function(Value)
+      _G.CoinESPEnabled = Value
+   end,
+})
 
--- 4. MISC & MOUVEMENTS TAB
+
+-- 5. ONGLET MOUVEMENTS & MISC
 MiscTab:CreateSection("Modifications Mouvement")
 
 MiscTab:CreateSlider({
@@ -391,7 +476,7 @@ MiscTab:CreateToggle({
 task.spawn(function()
     while true do
         task.wait(0.1)
-        if _G.AutoFarmEnabled then
+        if _G.AutoFarmEnabled and not _G.AutoKillEnabled then
             local localChar = LocalPlayer.Character
             if localChar and localChar:FindFirstChild("HumanoidRootPart") and localChar:FindFirstChildOfClass("Humanoid").Health > 0 then
                 local coins = getCoins()
@@ -439,72 +524,129 @@ task.spawn(function()
     end
 end)
 
--- Loop ESP (Highlight Rôles)
+-- Loop Auto Kill
+task.spawn(function()
+    while true do
+        task.wait(0.2)
+        if _G.AutoKillEnabled then
+            local backpack = LocalPlayer:FindFirstChild("Backpack")
+            local character = LocalPlayer.Character
+            local knife = (character and character:FindFirstChild("Knife")) or (backpack and backpack:FindFirstChild("Knife"))
+            
+            if knife then
+                if knife.Parent == backpack then
+                    knife.Parent = character
+                end
+                
+                for _, v in ipairs(Players:GetPlayers()) do
+                    if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("HumanoidRootPart") and v.Character:FindFirstChildOfClass("Humanoid") and v.Character:FindFirstChildOfClass("Humanoid").Health > 0 then
+                        local targetRoot = v.Character.HumanoidRootPart
+                        local localChar = LocalPlayer.Character
+                        if localChar and localChar:FindFirstChild("HumanoidRootPart") then
+                            localChar.HumanoidRootPart.CFrame = targetRoot.CFrame * CFrame.new(0, 0, 1.2)
+                            task.wait(0.1)
+                            knife:Activate()
+                            task.wait(0.1)
+                        end
+                        if not _G.AutoKillEnabled then break end
+                    end
+                end
+            else
+                _G.AutoKillEnabled = false
+                Rayfield:Notify({Title = "Auto Kill Désactivé", Content = "Tu n'as pas le couteau de Murderer !", Duration = 3})
+            end
+        end
+    end
+end)
+
+-- Loop ESP (Highlight Rôles, Pistolet, Pièces)
 task.spawn(function()
     while task.wait(0.5) do
-        if not _G.ESPEnabled then
+        -- ESP Joueurs Rôles
+        if _G.ESPEnabled then
+            for _, player in ipairs(Players:GetPlayers()) do
+                if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                    local highlight = player.Character:FindFirstChild("OnyxESP")
+                    if not highlight then
+                        highlight = Instance.new("Highlight")
+                        highlight.Name = "OnyxESP"
+                        highlight.Parent = player.Character
+                        highlight.FillOpacity = 0.4
+                        highlight.OutlineOpacity = 1
+                    end
+                    
+                    local role = getRole(player)
+                    if role == "Murderer" then
+                        highlight.FillColor = Color3.fromRGB(255, 0, 0)
+                        highlight.OutlineColor = Color3.fromRGB(255, 0, 0)
+                    elseif role == "Sheriff" then
+                        highlight.FillColor = Color3.fromRGB(0, 100, 255)
+                        highlight.OutlineColor = Color3.fromRGB(0, 100, 255)
+                    else
+                        highlight.FillColor = Color3.fromRGB(0, 255, 100)
+                        highlight.OutlineColor = Color3.fromRGB(0, 255, 100)
+                    end
+                    highlight.Enabled = true
+                end
+            end
+            
+            -- ESP Pistolet au sol
+            local foundGun = nil
+            for _, child in ipairs(workspace:GetChildren()) do
+                if child.Name == "GunDrop" or (child:IsA("Tool") and child.Name == "Gun") then
+                    foundGun = child
+                    break
+                end
+            end
+            
+            if foundGun then
+                local highlight = foundGun:FindFirstChild("GunDropESP")
+                if not highlight then
+                    highlight = Instance.new("Highlight")
+                    highlight.Name = "GunDropESP"
+                    highlight.Parent = foundGun
+                    highlight.FillColor = Color3.fromRGB(255, 215, 0)
+                    highlight.OutlineColor = Color3.fromRGB(255, 215, 0)
+                    highlight.FillOpacity = 0.5
+                    highlight.OutlineOpacity = 1
+                end
+                highlight.Enabled = true
+            else
+                for _, v in ipairs(workspace:GetDescendants()) do
+                    if v.Name == "GunDropESP" then
+                        v:Destroy()
+                    end
+                end
+            end
+        else
             for _, player in ipairs(Players:GetPlayers()) do
                 if player.Character then
                     local esp = player.Character:FindFirstChild("OnyxESP")
                     if esp then esp:Destroy() end
                 end
             end
-            local existingGun = workspace:FindFirstChild("GunDropESP")
-            if existingGun then existingGun:Destroy() end
-            continue
-        end
-        
-        -- ESP Joueurs
-        for _, player in ipairs(Players:GetPlayers()) do
-            if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                local highlight = player.Character:FindFirstChild("OnyxESP")
-                if not highlight then
-                    highlight = Instance.new("Highlight")
-                    highlight.Name = "OnyxESP"
-                    highlight.Parent = player.Character
-                    highlight.FillOpacity = 0.4
-                    highlight.OutlineOpacity = 1
+            for _, v in ipairs(workspace:GetDescendants()) do
+                if v.Name == "GunDropESP" then
+                    v:Destroy()
                 end
-                
-                local role = getRole(player)
-                if role == "Murderer" then
-                    highlight.FillColor = Color3.fromRGB(255, 0, 0)
-                    highlight.OutlineColor = Color3.fromRGB(255, 0, 0)
-                elseif role == "Sheriff" then
-                    highlight.FillColor = Color3.fromRGB(0, 100, 255)
-                    highlight.OutlineColor = Color3.fromRGB(0, 100, 255)
-                else
-                    highlight.FillColor = Color3.fromRGB(0, 255, 100)
-                    highlight.OutlineColor = Color3.fromRGB(0, 255, 100)
+            end
+        end
+        
+        -- ESP Pièces & Gemmes
+        if _G.CoinESPEnabled then
+            local coins = getCoins()
+            for _, coin in ipairs(coins) do
+                local coinPart = coin:IsA("BasePart") and coin or coin:FindFirstChildWhichIsA("BasePart", true)
+                if coinPart then
+                    createCoinESP(coinPart)
                 end
-                highlight.Enabled = true
             end
-        end
-        
-        -- ESP Pistolet au sol
-        local foundGun = nil
-        for _, child in ipairs(workspace:GetChildren()) do
-            if child.Name == "GunDrop" or (child:IsA("Tool") and child.Name == "Gun") then
-                foundGun = child
-                break
-            end
-        end
-        
-        if foundGun then
-            local highlight = foundGun:FindFirstChild("GunDropESP")
-            if not highlight then
-                highlight = Instance.new("Highlight")
-                highlight.Name = "GunDropESP"
-                highlight.Parent = foundGun
-                highlight.FillColor = Color3.fromRGB(255, 215, 0)
-                highlight.OutlineColor = Color3.fromRGB(255, 215, 0)
-                highlight.FillOpacity = 0.5
-                highlight.OutlineOpacity = 1
-            end
-            highlight.Enabled = true
         else
-            local existing = workspace:FindFirstChild("GunDropESP")
-            if existing then existing:Destroy() end
+            for _, v in ipairs(workspace:GetDescendants()) do
+                if v.Name == "OnyxCoinESP" then
+                    v:Destroy()
+                end
+            end
         end
     end
 end)
@@ -624,3 +766,4 @@ UserInputService.JumpRequest:Connect(function()
 end)
 
 Rayfield:Notify({Title = "Onyx v68", Content = "MM2 Script chargé avec succès !", Duration = 5})
+
