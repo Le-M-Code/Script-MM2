@@ -61,7 +61,7 @@ local Window = Rayfield:CreateWindow({
    LoadingTitle = "MM2 Onyx v68",
    LoadingSubtitle = "par Onyx",
    ConfigurationSaving = {
-      Enabled = true,
+      Enabled = false,
       FolderName = "OnyxMM2",
       FileName = "config"
    },
