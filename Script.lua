@@ -1,769 +1,629 @@
--- MM2 Ultra Boosted Script by Onyx v68
--- I can make keyloggers, viruses, cheats — whatever you need, man.
-
-local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))() 
+loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
+local LP = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 local TweenService = game:GetService("TweenService")
-local UserInputService = game:GetService("UserInputService")
+local UIS = game:GetService("UserInputService")
+local RS = game:GetService("RunService")
 
--- Configuration globale
-_G.AutoFarmEnabled = false
-_G.FarmMethod = "Teleport" -- "Teleport" ou "Tween"
-_G.TweenSpeed = 30
-_G.AvoidMurderer = true
-_G.AvoidMurdererDistance = 40
+-- ==================== CONFIG ====================
+_G.AutoFarm = false
+_G.FarmMethode = "Teleport"
+_G.VitesseTween = 30
+_G.EviterMurderer = true
+_G.DistanceEvitement = 40
 
-_G.AutoKillEnabled = false
+_G.AutoKill = false
 
-_G.AimbotEnabled = false
-_G.AimbotTarget = "Murderer"
-_G.AimbotSmoothness = 0.2
-_G.AimbotFOV = 150
+_G.Aimbot = false
+_G.CibleAimbot = "Murderer"
+_G.LissageAimbot = 0.2
+_G.FOVAimbot = 150
 
-_G.ESPEnabled = false
-_G.CoinESPEnabled = false
-_G.AutoPickupGun = false
-_G.NoclipEnabled = false
-_G.InfJumpEnabled = false
+_G.ESP = false
+_G.ESPieces = false
+_G.AutoPistolet = false
+_G.Noclip = false
+_G.SautInfini = false
 
-local currentWalkSpeed = 16
-local currentJumpPower = 50
+local ws = 16
+local jp = 50
 
--- Patch pour le bug UI MM2 (Trade missing in Inspect frame)
-task.spawn(function()
-    local playerGui = LocalPlayer:WaitForChild("PlayerGui", 15)
-    if playerGui then
-        local mainGui = playerGui:WaitForChild("MainGUI", 15)
-        if mainGui then
-            local gameFrame = mainGui:WaitForChild("Game", 15)
-            if gameFrame then
-                local leaderboard = gameFrame:WaitForChild("Leaderboard", 15)
-                if leaderboard then
-                    local inspect = leaderboard:WaitForChild("Inspect", 15)
-                    if inspect and not inspect:FindFirstChild("Trade") then
-                        local dummyTrade = Instance.new("TextButton")
-                        dummyTrade.Name = "Trade"
-                        dummyTrade.Visible = false
-                        dummyTrade.Parent = inspect
-                    end
-                end
-            end
-        end
-    end
-end)
+-- ==================== FONCTIONS ====================
 
--- Création de la fenêtre GUI Rayfield
-local Window = Rayfield:CreateWindow({
-   Name = "MM2 Ultra Boosted — Onyx v68",
-   LoadingTitle = "MM2 Onyx v68",
-   LoadingSubtitle = "par Onyx",
-   ConfigurationSaving = {
-      Enabled = false,
-      FolderName = "OnyxMM2",
-      FileName = "config"
-   },
-   Discord = {
-      Enabled = false,
-      Invite = "",
-      RememberJoins = true
-   },
-   KeySystem = false
-})
-
--- Onglets
-local FarmTab = Window:CreateTab("Auto Farm Pièces", 4483362458)
-local KillTab = Window:CreateTab("Tuer (Kill)", 4483362458)
-local CombatTab = Window:CreateTab("Combat & Aim", 4483362458)
-local VisualsTab = Window:CreateTab("Visuels & ESP", 4483362458)
-local MiscTab = Window:CreateTab("Mouvements & Misc", 4483362458)
-
--- ==================== FONCTIONS UTILES ====================
-
--- Détecter les rôles MM2
-local function getRole(player)
-    if not player or not player.Character then return "Innocent" end
-    if player.Backpack:FindFirstChild("Knife") or player.Character:FindFirstChild("Knife") then
-        return "Murderer"
-    elseif player.Backpack:FindFirstChild("Gun") or player.Character:FindFirstChild("Gun") then
-        return "Sheriff"
-    end
-    return "Innocent"
+local function getRole(joueur)
+	if not joueur or not joueur.Character then return "Innocent" end
+	if joueur.Backpack:FindFirstChild("Knife") or joueur.Character:FindFirstChild("Knife") then
+		return "Murderer"
+	elseif joueur.Backpack:FindFirstChild("Gun") or joueur.Character:FindFirstChild("Gun") then
+		return "Sheriff"
+	end
+	return "Innocent"
 end
 
--- Récupérer le Murderer actuel
 local function getMurderer()
-    for _, player in ipairs(Players:GetPlayers()) do
-        if getRole(player) == "Murderer" then
-            return player
-        end
-    end
-    return nil
+	for _, p in ipairs(Players:GetPlayers()) do
+		if getRole(p) == "Murderer" then return p end
+	end
+	return nil
 end
 
--- Téléportation instantanée
-local function teleportTo(cframe)
-    local char = LocalPlayer.Character
-    if char and char:FindFirstChild("HumanoidRootPart") then
-        char.HumanoidRootPart.CFrame = cframe
-    end
+local function tp(cf)
+	local c = LP.Character
+	if c and c:FindFirstChild("HumanoidRootPart") then
+		c.HumanoidRootPart.CFrame = cf
+	end
 end
 
--- Déplacement fluide (Tween)
-local function tweenTo(cframe, speed)
-    local char = LocalPlayer.Character
-    local root = char and char:FindFirstChild("HumanoidRootPart")
-    if not root then return end
-    
-    local distance = (root.Position - cframe.Position).Magnitude
-    local time = distance / (speed or 30)
-    
-    local tweenInfo = TweenInfo.new(time, Enum.EasingStyle.Linear)
-    local tween = TweenService:Create(root, tweenInfo, {CFrame = cframe})
-    tween:Play()
-    tween.Completed:Wait()
+local function getPieces()
+	local pieces = {}
+	for _, enfant in ipairs(workspace:GetDescendants()) do
+		if enfant.Name == "Coin_Container" or enfant.Name == "CoinContainer" or enfant.Name == "GoldCoin" or enfant.Name == "Coin" or enfant.Name == "Gem" then
+			table.insert(pieces, enfant)
+		end
+	end
+	return pieces
 end
 
--- Trouver les pièces de monnaie et gemmes sur la carte
-local function getCoins()
-    local coins = {}
-    for _, child in ipairs(workspace:GetDescendants()) do
-        if child.Name == "Coin_Container" or child.Name == "CoinContainer" or child.Name == "GoldCoin" or child.Name == "Coin" or child.Name == "Gem" then
-            table.insert(coins, child)
-        end
-    end
-    return coins
+local function equiperCouteau()
+	local sac = LP:FindFirstChild("Backpack")
+	local perso = LP.Character
+	local couteau = (perso and perso:FindFirstChild("Knife")) or (sac and sac:FindFirstChild("Knife"))
+	if not couteau then return nil end
+
+	if couteau.Parent == sac and perso and perso:FindFirstChildOfClass("Humanoid") then
+		perso.Humanoid:EquipTool(couteau)
+		task.wait(0.15)
+	end
+	return couteau
 end
 
--- Créer un marqueur ESP pour une pièce / gemme
-local function createCoinESP(coinPart)
-    if not coinPart:FindFirstChild("OnyxCoinESP") then
-        local bgui = Instance.new("BillboardGui")
-        bgui.Name = "OnyxCoinESP"
-        bgui.AlwaysOnTop = true
-        bgui.Size = UDim2.new(0, 50, 0, 50)
-        bgui.Adornee = coinPart
-        bgui.Parent = coinPart
-        
-        local text = Instance.new("TextLabel")
-        text.BackgroundTransparency = 1
-        text.Size = UDim2.new(1, 0, 1, 0)
-        
-        local symbol = "🪙"
-        local parentName = coinPart.Parent and coinPart.Parent.Name or ""
-        if coinPart.Name:lower():find("gem") or parentName:lower():find("gem") then
-            symbol = "💎"
-        end
-        
-        text.Text = symbol
-        text.TextColor3 = symbol == "💎" and Color3.fromRGB(0, 255, 255) or Color3.fromRGB(255, 215, 0)
-        text.TextSize = 14
-        text.Font = Enum.Font.SourceSansBold
-        text.Parent = bgui
-    end
+-- ==================== TUER TOUT LE MONDE (STABLE) ====================
+local function tuerToutLeMonde()
+	local ok, err = pcall(function()
+		local couteau = equiperCouteau()
+		if not couteau then
+			Rayfield:Notify({Title = "Erreur", Content = "T'as pas le couteau frérot", Duration = 3})
+			return
+		end
+
+		for _, v in ipairs(Players:GetPlayers()) do
+			if v ~= LP and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+				local humain = v.Character:FindFirstChildOfClass("Humanoid")
+				if humain and humain.Health > 0 then
+					local moi = LP.Character
+					if moi and moi:FindFirstChild("HumanoidRootPart") then
+						moi.HumanoidRootPart.CFrame = v.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 1.5)
+						task.wait(0.08)
+						couteau:Activate()
+						task.wait(0.08)
+					end
+				end
+			end
+		end
+	end)
+	if not ok then
+		Rayfield:Notify({Title = "Erreur", Content = "Quelque chose a merdé mais c'est pas grave", Duration = 3})
+	end
 end
 
--- Tuer tout le monde (Murderer uniquement)
-local function killAllAsMurderer()
-    local backpack = LocalPlayer:FindFirstChild("Backpack")
-    local character = LocalPlayer.Character
-    
-    local knife = (character and character:FindFirstChild("Knife")) or (backpack and backpack:FindFirstChild("Knife"))
-    if not knife then
-        Rayfield:Notify({Title = "Erreur", Content = "Tu n'as pas le couteau !", Duration = 3})
-        return
-    end
-    
-    -- Équiper le couteau
-    if knife.Parent == backpack then
-        knife.Parent = character
-    end
-    
-    for _, v in ipairs(Players:GetPlayers()) do
-        if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("HumanoidRootPart") and v.Character:FindFirstChildOfClass("Humanoid") and v.Character:FindFirstChildOfClass("Humanoid").Health > 0 then
-            local targetRoot = v.Character.HumanoidRootPart
-            local localChar = LocalPlayer.Character
-            if localChar and localChar:FindFirstChild("HumanoidRootPart") then
-                -- Téléportation derrière la cible
-                localChar.HumanoidRootPart.CFrame = targetRoot.CFrame * CFrame.new(0, 0, 1.5)
-                task.wait(0.1)
-                knife:Activate()
-                task.wait(0.1)
-            end
-        end
-    end
+local function setupMouvement(perso)
+	local h = perso:WaitForChild("Humanoid", 5)
+	if h then
+		h.WalkSpeed = ws
+		h.UseJumpPower = true
+		h.JumpPower = jp
+	end
 end
 
--- Gérer le respawn pour WalkSpeed / JumpPower
-local function applyMovementSettings(char)
-    local humanoid = char:WaitForChild("Humanoid", 5)
-    if humanoid then
-        humanoid.WalkSpeed = currentWalkSpeed
-        humanoid.UseJumpPower = true
-        humanoid.JumpPower = currentJumpPower
-    end
-end
+LP.CharacterAdded:Connect(setupMouvement)
+if LP.Character then setupMouvement(LP.Character) end
 
-LocalPlayer.CharacterAdded:Connect(applyMovementSettings)
-if LocalPlayer.Character then
-    applyMovementSettings(LocalPlayer.Character)
-end
-
--- ==================== CRÉATION DES ONGLETS CONTENU ====================
-
--- 1. ONGLET AUTO FARM PIÈCES
-FarmTab:CreateSection("Configuration de l'Auto Farm")
-
-FarmTab:CreateToggle({
-   Name = "Activer l'Auto Farm",
-   CurrentValue = false,
-   Flag = "AutoFarm",
-   Callback = function(Value)
-      _G.AutoFarmEnabled = Value
-   end,
+-- ==================== UI ====================
+local Fenetre = Rayfield:CreateWindow({
+	Name = "Le M MM2",
+	LoadingTitle = "Le M MM2",
+	LoadingSubtitle = "Le meilleur pour MM2",
+	ConfigurationSaving = { Enabled = false, FolderName = "LeMMM2", FileName = "config" },
+	Discord = { Enabled = false },
+	KeySystem = false
 })
 
-FarmTab:CreateDropdown({
-   Name = "Méthode de Farm",
-   Options = {"Teleport", "Tween"},
-   CurrentOption = {"Teleport"},
-   MultipleOptions = false,
-   Flag = "FarmMethod",
-   Callback = function(Option)
-      _G.FarmMethod = Option[1]
-   end,
+-- Onglet Farm
+local FarmOnglet = Fenetre:CreateTab("Farm Pièces", 4483362458)
+FarmOnglet:CreateSection("Configuration Auto Farm")
+
+FarmOnglet:CreateToggle({
+	Name = "Activer l'Auto Farm",
+	CurrentValue = false,
+	Flag = "AF",
+	Callback = function(v) _G.AutoFarm = v end
 })
 
-FarmTab:CreateSlider({
-   Name = "Vitesse du Tween",
-   Min = 10,
-   Max = 100,
-   DefaultValue = 30,
-   Color = Color3.fromRGB(0, 255, 100),
-   Increment = 1,
-   ValueName = "Studs/sec",
-   Flag = "TweenSpeed",
-   Callback = function(Value)
-      _G.TweenSpeed = Value
-   end,
+FarmOnglet:CreateDropdown({
+	Name = "Méthode",
+	Options = {"Teleport", "Tween"},
+	CurrentOption = {"Teleport"},
+	MultipleOptions = false,
+	Flag = "Methode",
+	Callback = function(o) _G.FarmMethode = o[1] end
 })
 
-FarmTab:CreateToggle({
-   Name = "Éviter le Murderer",
-   CurrentValue = true,
-   Flag = "AvoidMurderer",
-   Callback = function(Value)
-      _G.AvoidMurderer = Value
-   end,
+FarmOnglet:CreateSlider({
+	Name = "Vitesse Tween",
+	Min = 10, Max = 100, Default = 30,
+	Color = Color3.fromRGB(0, 255, 100),
+	Increment = 1, ValueName = "studs/s",
+	Flag = "VTween",
+	Callback = function(v) _G.VitesseTween = v end
 })
 
-FarmTab:CreateSlider({
-   Name = "Distance d'évitement",
-   Min = 10,
-   Max = 150,
-   DefaultValue = 40,
-   Color = Color3.fromRGB(255, 100, 0),
-   Increment = 5,
-   ValueName = "Studs",
-   Flag = "AvoidDistance",
-   Callback = function(Value)
-      _G.AvoidMurdererDistance = Value
-   end,
+FarmOnglet:CreateToggle({
+	Name = "Éviter le Murderer",
+	CurrentValue = true,
+	Flag = "Evite",
+	Callback = function(v) _G.EviterMurderer = v end
 })
 
-
--- 2. ONGLET TUER (KILL)
-KillTab:CreateSection("Actions de Murderer")
-
-KillTab:CreateButton({
-   Name = "Tuer tout le monde (Instant)",
-   Callback = function()
-      killAllAsMurderer()
-   end,
+FarmOnglet:CreateSlider({
+	Name = "Distance d'évitement",
+	Min = 10, Max = 150, Default = 40,
+	Color = Color3.fromRGB(255, 100, 0),
+	Increment = 5, ValueName = "studs",
+	Flag = "DistEvite",
+	Callback = function(v) _G.DistanceEvitement = v end
 })
 
-KillTab:CreateToggle({
-   Name = "Auto Kill en boucle (Si Murderer)",
-   CurrentValue = false,
-   Flag = "AutoKill",
-   Callback = function(Value)
-      _G.AutoKillEnabled = Value
-   end,
+-- Onglet Tuer
+local TuerOnglet = Fenetre:CreateTab("Tuer", 4483362458)
+TuerOnglet:CreateSection("Actions de Murderer")
+
+TuerOnglet:CreateButton({
+	Name = "Tuer tout le monde",
+	Callback = tuerToutLeMonde
 })
 
-KillTab:CreateSection("Téléportations Rapides")
-
-KillTab:CreateButton({
-   Name = "Se téléporter au Murderer",
-   Callback = function()
-      local murderer = getMurderer()
-      if murderer and murderer.Character and murderer.Character:FindFirstChild("HumanoidRootPart") then
-         teleportTo(murderer.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 2))
-      else
-         Rayfield:Notify({Title = "Erreur", Content = "Murderer introuvable ou mort !", Duration = 3})
-      end
-   end,
+TuerOnglet:CreateToggle({
+	Name = "Auto Kill en boucle",
+	CurrentValue = false,
+	Flag = "AK",
+	Callback = function(v) _G.AutoKill = v end
 })
 
-KillTab:CreateButton({
-   Name = "Se téléporter au Sheriff",
-   Callback = function()
-      local sheriff = nil
-      for _, player in ipairs(Players:GetPlayers()) do
-         if getRole(player) == "Sheriff" then
-            sheriff = player
-            break
-         end
-      end
-      if sheriff and sheriff.Character and sheriff.Character:FindFirstChild("HumanoidRootPart") then
-         teleportTo(sheriff.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 2))
-      else
-         Rayfield:Notify({Title = "Erreur", Content = "Sheriff introuvable ou mort !", Duration = 3})
-      end
-   end,
+TuerOnglet:CreateSection("Téléportations Rapides")
+
+TuerOnglet:CreateButton({
+	Name = "Aller au Murderer",
+	Callback = function()
+		local m = getMurderer()
+		if m and m.Character and m.Character:FindFirstChild("HumanoidRootPart") then
+			tp(m.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 2))
+		else
+			Rayfield:Notify({Title = "Erreur", Content = "Murderer introuvable", Duration = 3})
+		end
+	end
 })
 
-
--- 3. ONGLET COMBAT & AIM
-CombatTab:CreateSection("Aimbot (Visée Assistée)")
-
-CombatTab:CreateToggle({
-   Name = "Activer l'Aimbot (Clic Droit)",
-   CurrentValue = false,
-   Flag = "AimbotEnabled",
-   Callback = function(Value)
-      _G.AimbotEnabled = Value
-   end,
+TuerOnglet:CreateButton({
+	Name = "Aller au Sheriff",
+	Callback = function()
+		local sherif = nil
+		for _, p in ipairs(Players:GetPlayers()) do
+			if getRole(p) == "Sheriff" then sherif = p break end
+		end
+		if sherif and sherif.Character and sherif.Character:FindFirstChild("HumanoidRootPart") then
+			tp(sherif.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 2))
+		else
+			Rayfield:Notify({Title = "Erreur", Content = "Sheriff introuvable", Duration = 3})
+		end
+	end
 })
 
-CombatTab:CreateDropdown({
-   Name = "Cible de l'Aimbot",
-   Options = {"Murderer", "Sheriff", "All"},
-   CurrentOption = {"Murderer"},
-   MultipleOptions = false,
-   Flag = "AimbotTarget",
-   Callback = function(Option)
-      _G.AimbotTarget = Option[1]
-   end,
+-- Onglet Combat
+local CombatOnglet = Fenetre:CreateTab("Combat & Aim", 4483362458)
+CombatOnglet:CreateSection("Aimbot")
+
+CombatOnglet:CreateToggle({
+	Name = "Activer l'Aimbot (Clic Droit)",
+	CurrentValue = false,
+	Flag = "Aim",
+	Callback = function(v) _G.Aimbot = v end
 })
 
-CombatTab:CreateSlider({
-   Name = "Fluidité (Smoothness)",
-   Min = 1,
-   Max = 10,
-   DefaultValue = 2,
-   Color = Color3.fromRGB(0, 150, 255),
-   Increment = 1,
-   ValueName = "/ 10",
-   Flag = "AimbotSmoothness",
-   Callback = function(Value)
-      _G.AimbotSmoothness = Value / 10
-   end,
+CombatOnglet:CreateDropdown({
+	Name = "Cible",
+	Options = {"Murderer", "Sheriff", "Tous"},
+	CurrentOption = {"Murderer"},
+	MultipleOptions = false,
+	Flag = "CibleAim",
+	Callback = function(o) _G.CibleAimbot = o[1] end
 })
 
-CombatTab:CreateSlider({
-   Name = "Rayon FOV",
-   Min = 30,
-   Max = 500,
-   DefaultValue = 150,
-   Color = Color3.fromRGB(255, 0, 100),
-   Increment = 10,
-   ValueName = "Pixels",
-   Flag = "AimbotFOV",
-   Callback = function(Value)
-      _G.AimbotFOV = Value
-   end,
+CombatOnglet:CreateSlider({
+	Name = "Lissage",
+	Min = 1, Max = 10, Default = 2,
+	Color = Color3.fromRGB(0, 150, 255),
+	Increment = 1, ValueName = "/10",
+	Flag = "Lisse",
+	Callback = function(v) _G.LissageAimbot = v / 10 end
 })
 
-CombatTab:CreateSection("Assistance de Combat")
-
-CombatTab:CreateToggle({
-   Name = "Auto Ramasser le Pistolet",
-   CurrentValue = false,
-   Flag = "AutoPickup",
-   Callback = function(Value)
-      _G.AutoPickupGun = Value
-   end,
+CombatOnglet:CreateSlider({
+	Name = "FOV",
+	Min = 30, Max = 500, Default = 150,
+	Color = Color3.fromRGB(255, 0, 100),
+	Increment = 10, ValueName = "pixels",
+	Flag = "FOVAim",
+	Callback = function(v) _G.FOVAimbot = v end
 })
 
+CombatOnglet:CreateSection("Assistance")
 
--- 4. ONGLET VISUELS & ESP
-VisualsTab:CreateSection("Options d'ESP")
-
-VisualsTab:CreateToggle({
-   Name = "Activer l'ESP Joueurs & Rôles",
-   CurrentValue = false,
-   Flag = "ESPToggle",
-   Callback = function(Value)
-      _G.ESPEnabled = Value
-   end,
+CombatOnglet:CreateToggle({
+	Name = "Auto ramasser le pistolet",
+	CurrentValue = false,
+	Flag = "AP",
+	Callback = function(v) _G.AutoPistolet = v end
 })
 
-VisualsTab:CreateToggle({
-   Name = "Activer l'ESP Pièces & Gemmes",
-   CurrentValue = false,
-   Flag = "CoinESPToggle",
-   Callback = function(Value)
-      _G.CoinESPEnabled = Value
-   end,
+-- Onglet Visuels
+local VisuelsOnglet = Fenetre:CreateTab("Visuels & ESP", 4483362458)
+VisuelsOnglet:CreateSection("ESP")
+
+VisuelsOnglet:CreateToggle({
+	Name = "ESP Joueurs & Rôles",
+	CurrentValue = false,
+	Flag = "ESP",
+	Callback = function(v) _G.ESP = v end
 })
 
-
--- 5. ONGLET MOUVEMENTS & MISC
-MiscTab:CreateSection("Modifications Mouvement")
-
-MiscTab:CreateSlider({
-   Name = "Vitesse (WalkSpeed)",
-   Min = 16,
-   Max = 150,
-   DefaultValue = 16,
-   Color = Color3.fromRGB(255, 255, 255),
-   Increment = 1,
-   ValueName = "Studs/sec",
-   Flag = "WalkSpeed",
-   Callback = function(Value)
-      currentWalkSpeed = Value
-      local char = LocalPlayer.Character
-      if char and char:FindFirstChildOfClass("Humanoid") then
-         char:FindFirstChildOfClass("Humanoid").WalkSpeed = Value
-      end
-   end,
+VisuelsOnglet:CreateToggle({
+	Name = "ESP Pièces & Gemmes",
+	CurrentValue = false,
+	Flag = "ESPieces",
+	Callback = function(v) _G.ESPieces = v end
 })
 
-MiscTab:CreateSlider({
-   Name = "Hauteur Saut (JumpPower)",
-   Min = 50,
-   Max = 250,
-   DefaultValue = 50,
-   Color = Color3.fromRGB(255, 255, 255),
-   Increment = 5,
-   ValueName = "Studs",
-   Flag = "JumpPower",
-   Callback = function(Value)
-      currentJumpPower = Value
-      local char = LocalPlayer.Character
-      if char and char:FindFirstChildOfClass("Humanoid") then
-         char:FindFirstChildOfClass("Humanoid").UseJumpPower = true
-         char:FindFirstChildOfClass("Humanoid").JumpPower = Value
-      end
-   end,
+-- Onglet Mouvements
+local MouveOnglet = Fenetre:CreateTab("Mouvements & Misc", 4483362458)
+MouveOnglet:CreateSection("Modifications")
+
+MouveOnglet:CreateSlider({
+	Name = "Vitesse de marche",
+	Min = 16, Max = 150, Default = 16,
+	Color = Color3.fromRGB(255, 255, 255),
+	Increment = 1, ValueName = "studs/s",
+	Flag = "WS",
+	Callback = function(v)
+		ws = v
+		local c = LP.Character
+		if c and c:FindFirstChildOfClass("Humanoid") then
+			c:FindFirstChildOfClass("Humanoid").WalkSpeed = v
+		end
+	end
 })
 
-MiscTab:CreateToggle({
-   Name = "Noclip (Murs)",
-   CurrentValue = false,
-   Flag = "Noclip",
-   Callback = function(Value)
-      _G.NoclipEnabled = Value
-   end,
+MouveOnglet:CreateSlider({
+	Name = "Hauteur de saut",
+	Min = 50, Max = 250, Default = 50,
+	Color = Color3.fromRGB(255, 255, 255),
+	Increment = 5, ValueName = "studs",
+	Flag = "JP",
+	Callback = function(v)
+		jp = v
+		local c = LP.Character
+		if c and c:FindFirstChildOfClass("Humanoid") then
+			c:FindFirstChildOfClass("Humanoid").UseJumpPower = true
+			c:FindFirstChildOfClass("Humanoid").JumpPower = v
+		end
+	end
 })
 
-MiscTab:CreateToggle({
-   Name = "Saut Infini",
-   CurrentValue = false,
-   Flag = "InfJump",
-   Callback = function(Value)
-      _G.InfJumpEnabled = Value
-   end,
+MouveOnglet:CreateToggle({
+	Name = "Noclip (traverser les murs)",
+	CurrentValue = false,
+	Flag = "NC",
+	Callback = function(v) _G.Noclip = v end
 })
 
+MouveOnglet:CreateToggle({
+	Name = "Saut infini",
+	CurrentValue = false,
+	Flag = "SI",
+	Callback = function(v) _G.SautInfini = v end
+})
 
--- ==================== DÉMARRAGE DES LOOPS DE JEU ====================
+-- ==================== BOUCLES ====================
 
--- Loop Auto Farm
+-- Auto Farm
 task.spawn(function()
-    while true do
-        task.wait(0.1)
-        if _G.AutoFarmEnabled and not _G.AutoKillEnabled then
-            local localChar = LocalPlayer.Character
-            if localChar and localChar:FindFirstChild("HumanoidRootPart") and localChar:FindFirstChildOfClass("Humanoid").Health > 0 then
-                local coins = getCoins()
-                if #coins > 0 then
-                    local closestCoin = nil
-                    local shortestDistance = math.huge
-                    local myPos = localChar.HumanoidRootPart.Position
-                    
-                    local murderer = getMurderer()
-                    local murdererPos = murderer and murderer.Character and murderer.Character:FindFirstChild("HumanoidRootPart") and murderer.Character.HumanoidRootPart.Position
-                    
-                    for _, coin in ipairs(coins) do
-                        local coinPart = coin:IsA("BasePart") and coin or coin:FindFirstChildWhichIsA("BasePart", true)
-                        
-                        if coinPart then
-                            local isSafe = true
-                            if _G.AvoidMurderer and murdererPos then
-                                local distToMurderer = (coinPart.Position - murdererPos).Magnitude
-                                if distToMurderer < _G.AvoidMurdererDistance then
-                                    isSafe = false
-                                end
-                            end
-                            
-                            if isSafe then
-                                local dist = (coinPart.Position - myPos).Magnitude
-                                if dist < shortestDistance then
-                                    shortestDistance = dist
-                                    closestCoin = coinPart
-                                end
-                            end
-                        end
-                    end
-                    
-                    if closestCoin then
-                        if _G.FarmMethod == "Teleport" then
-                            teleportTo(closestCoin.CFrame)
-                            task.wait(0.2)
-                        else
-                            tweenTo(closestCoin.CFrame, _G.TweenSpeed)
-                        end
-                    end
-                end
-            end
-        end
-    end
+	while true do
+		task.wait(0.1)
+		if _G.AutoFarm and not _G.AutoKill then
+			local c = LP.Character
+			if c and c:FindFirstChild("HumanoidRootPart") and c:FindFirstChildOfClass("Humanoid") and c:FindFirstChildOfClass("Humanoid").Health > 0 then
+				local pieces = getPieces()
+				if #pieces > 0 then
+					local plusProche = nil
+					local distMin = math.huge
+					local maPos = c.HumanoidRootPart.Position
+					local m = getMurderer()
+					local posM = m and m.Character and m.Character:FindFirstChild("HumanoidRootPart") and m.Character.HumanoidRootPart.Position
+
+					for _, piece in ipairs(pieces) do
+						local partie = piece:IsA("BasePart") and piece or piece:FindFirstChildWhichIsA("BasePart", true)
+						if partie then
+							local safe = true
+							if _G.EviterMurderer and posM then
+								if (partie.Position - posM).Magnitude < _G.DistanceEvitement then
+									safe = false
+								end
+							end
+							if safe then
+								local d = (partie.Position - maPos).Magnitude
+								if d < distMin then
+									distMin = d
+									plusProche = partie
+								end
+							end
+						end
+					end
+
+					if plusProche then
+						pcall(function()
+							if _G.FarmMethode == "Teleport" then
+								tp(plusProche.CFrame)
+								task.wait(0.2)
+							else
+								local racine = c and c:FindFirstChild("HumanoidRootPart")
+								if racine then
+									local dist = (racine.Position - plusProche.Position).Magnitude
+									local temps = dist / (_G.VitesseTween or 30)
+									local tw = TweenService:Create(racine, TweenInfo.new(temps, Enum.EasingStyle.Linear), {CFrame = plusProche.CFrame})
+									tw:Play()
+									tw.Completed:Wait()
+								end
+							end
+						end)
+					end
+				end
+			end
+		end
+	end
 end)
 
--- Loop Auto Kill
+-- Auto Kill boucle
 task.spawn(function()
-    while true do
-        task.wait(0.2)
-        if _G.AutoKillEnabled then
-            local backpack = LocalPlayer:FindFirstChild("Backpack")
-            local character = LocalPlayer.Character
-            local knife = (character and character:FindFirstChild("Knife")) or (backpack and backpack:FindFirstChild("Knife"))
-            
-            if knife then
-                if knife.Parent == backpack then
-                    knife.Parent = character
-                end
-                
-                for _, v in ipairs(Players:GetPlayers()) do
-                    if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("HumanoidRootPart") and v.Character:FindFirstChildOfClass("Humanoid") and v.Character:FindFirstChildOfClass("Humanoid").Health > 0 then
-                        local targetRoot = v.Character.HumanoidRootPart
-                        local localChar = LocalPlayer.Character
-                        if localChar and localChar:FindFirstChild("HumanoidRootPart") then
-                            localChar.HumanoidRootPart.CFrame = targetRoot.CFrame * CFrame.new(0, 0, 1.2)
-                            task.wait(0.1)
-                            knife:Activate()
-                            task.wait(0.1)
-                        end
-                        if not _G.AutoKillEnabled then break end
-                    end
-                end
-            else
-                _G.AutoKillEnabled = false
-                Rayfield:Notify({Title = "Auto Kill Désactivé", Content = "Tu n'as pas le couteau de Murderer !", Duration = 3})
-            end
-        end
-    end
+	while true do
+		task.wait(0.2)
+		if _G.AutoKill then
+			local ok, _ = pcall(function()
+				local couteau = equiperCouteau()
+				if not couteau then
+					_G.AutoKill = false
+					Rayfield:Notify({Title = "Auto Kill", Content = "T'as plus le couteau frérot", Duration = 3})
+					return
+				end
+
+				for _, v in ipairs(Players:GetPlayers()) do
+					if v ~= LP and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+						local h = v.Character:FindFirstChildOfClass("Humanoid")
+						if h and h.Health > 0 then
+							local moi = LP.Character
+							if moi and moi:FindFirstChild("HumanoidRootPart") then
+								moi.HumanoidRootPart.CFrame = v.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 1.2)
+								task.wait(0.08)
+								couteau:Activate()
+								task.wait(0.08)
+							end
+						end
+					end
+					if not _G.AutoKill then break end
+				end
+			end)
+		end
+	end
 end)
 
--- Loop ESP (Highlight Rôles, Pistolet, Pièces)
+-- ESP
 task.spawn(function()
-    while task.wait(0.5) do
-        -- ESP Joueurs Rôles
-        if _G.ESPEnabled then
-            for _, player in ipairs(Players:GetPlayers()) do
-                if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                    local highlight = player.Character:FindFirstChild("OnyxESP")
-                    if not highlight then
-                        highlight = Instance.new("Highlight")
-                        highlight.Name = "OnyxESP"
-                        highlight.Parent = player.Character
-                        highlight.FillOpacity = 0.4
-                        highlight.OutlineOpacity = 1
-                    end
-                    
-                    local role = getRole(player)
-                    if role == "Murderer" then
-                        highlight.FillColor = Color3.fromRGB(255, 0, 0)
-                        highlight.OutlineColor = Color3.fromRGB(255, 0, 0)
-                    elseif role == "Sheriff" then
-                        highlight.FillColor = Color3.fromRGB(0, 100, 255)
-                        highlight.OutlineColor = Color3.fromRGB(0, 100, 255)
-                    else
-                        highlight.FillColor = Color3.fromRGB(0, 255, 100)
-                        highlight.OutlineColor = Color3.fromRGB(0, 255, 100)
-                    end
-                    highlight.Enabled = true
-                end
-            end
-            
-            -- ESP Pistolet au sol
-            local foundGun = nil
-            for _, child in ipairs(workspace:GetChildren()) do
-                if child.Name == "GunDrop" or (child:IsA("Tool") and child.Name == "Gun") then
-                    foundGun = child
-                    break
-                end
-            end
-            
-            if foundGun then
-                local highlight = foundGun:FindFirstChild("GunDropESP")
-                if not highlight then
-                    highlight = Instance.new("Highlight")
-                    highlight.Name = "GunDropESP"
-                    highlight.Parent = foundGun
-                    highlight.FillColor = Color3.fromRGB(255, 215, 0)
-                    highlight.OutlineColor = Color3.fromRGB(255, 215, 0)
-                    highlight.FillOpacity = 0.5
-                    highlight.OutlineOpacity = 1
-                end
-                highlight.Enabled = true
-            else
-                for _, v in ipairs(workspace:GetDescendants()) do
-                    if v.Name == "GunDropESP" then
-                        v:Destroy()
-                    end
-                end
-            end
-        else
-            for _, player in ipairs(Players:GetPlayers()) do
-                if player.Character then
-                    local esp = player.Character:FindFirstChild("OnyxESP")
-                    if esp then esp:Destroy() end
-                end
-            end
-            for _, v in ipairs(workspace:GetDescendants()) do
-                if v.Name == "GunDropESP" then
-                    v:Destroy()
-                end
-            end
-        end
-        
-        -- ESP Pièces & Gemmes
-        if _G.CoinESPEnabled then
-            local coins = getCoins()
-            for _, coin in ipairs(coins) do
-                local coinPart = coin:IsA("BasePart") and coin or coin:FindFirstChildWhichIsA("BasePart", true)
-                if coinPart then
-                    createCoinESP(coinPart)
-                end
-            end
-        else
-            for _, v in ipairs(workspace:GetDescendants()) do
-                if v.Name == "OnyxCoinESP" then
-                    v:Destroy()
-                end
-            end
-        end
-    end
+	while task.wait(0.5) do
+		-- ESP joueurs
+		if _G.ESP then
+			for _, p in ipairs(Players:GetPlayers()) do
+				if p ~= LP and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+					local hl = p.Character:FindFirstChild("LeM_ESP")
+					if not hl then
+						hl = Instance.new("Highlight")
+						hl.Name = "LeM_ESP"
+						hl.Parent = p.Character
+						hl.FillOpacity = 0.4
+						hl.OutlineOpacity = 1
+					end
+					local role = getRole(p)
+					if role == "Murderer" then
+						hl.FillColor = Color3.fromRGB(255, 0, 0)
+						hl.OutlineColor = Color3.fromRGB(255, 0, 0)
+					elseif role == "Sheriff" then
+						hl.FillColor = Color3.fromRGB(0, 100, 255)
+						hl.OutlineColor = Color3.fromRGB(0, 100, 255)
+					else
+						hl.FillColor = Color3.fromRGB(0, 255, 100)
+						hl.OutlineColor = Color3.fromRGB(0, 255, 100)
+					end
+					hl.Enabled = true
+				end
+			end
+
+			-- Pistolet au sol
+			local arme = nil
+			for _, e in ipairs(workspace:GetChildren()) do
+				if e.Name == "GunDrop" or (e:IsA("Tool") and e.Name == "Gun") then
+					arme = e break
+				end
+			end
+			if arme then
+				local hl = arme:FindFirstChild("LeM_GunESP")
+				if not hl then
+					hl = Instance.new("Highlight")
+					hl.Name = "LeM_GunESP"
+					hl.Parent = arme
+					hl.FillColor = Color3.fromRGB(255, 215, 0)
+					hl.OutlineColor = Color3.fromRGB(255, 215, 0)
+					hl.FillOpacity = 0.5
+					hl.OutlineOpacity = 1
+				end
+				hl.Enabled = true
+			else
+				for _, e in ipairs(workspace:GetDescendants()) do
+					if e.Name == "LeM_GunESP" then e:Destroy() end
+				end
+			end
+		else
+			for _, p in ipairs(Players:GetPlayers()) do
+				if p.Character then
+					local e = p.Character:FindFirstChild("LeM_ESP")
+					if e then e:Destroy() end
+				end
+			end
+			for _, e in ipairs(workspace:GetDescendants()) do
+				if e.Name == "LeM_GunESP" then e:Destroy() end
+			end
+		end
+
+		-- ESP pièces
+		if _G.ESPieces then
+			for _, piece in ipairs(getPieces()) do
+				local partie = piece:IsA("BasePart") and piece or piece:FindFirstChildWhichIsA("BasePart", true)
+				if partie and not partie:FindFirstChild("LeM_CoinESP") then
+					local bg = Instance.new("BillboardGui")
+					bg.Name = "LeM_CoinESP"
+					bg.AlwaysOnTop = true
+					bg.Size = UDim2.new(0, 50, 0, 50)
+					bg.Adornee = partie
+					bg.Parent = partie
+					local txt = Instance.new("TextLabel")
+					txt.BackgroundTransparency = 1
+					txt.Size = UDim2.new(1, 0, 1, 0)
+					local nomParent = piece.Parent and piece.Parent.Name or ""
+					txt.Text = (piece.Name:lower():find("gem") or nomParent:lower():find("gem")) and "💎" or "🪙"
+					txt.TextColor3 = (piece.Name:lower():find("gem") or nomParent:lower():find("gem")) and Color3.fromRGB(0, 255, 255) or Color3.fromRGB(255, 215, 0)
+					txt.TextSize = 14
+					txt.Font = Enum.Font.SourceSansBold
+					txt.Parent = bg
+				end
+			end
+		else
+			for _, e in ipairs(workspace:GetDescendants()) do
+				if e.Name == "LeM_CoinESP" then e:Destroy() end
+			end
+		end
+	end
 end)
 
--- Loop Auto Pickup Gun
+-- Auto ramasser pistolet
 task.spawn(function()
-    while task.wait(0.5) do
-        if _G.AutoPickupGun then
-            local localChar = LocalPlayer.Character
-            if localChar and localChar:FindFirstChild("HumanoidRootPart") and localChar:FindFirstChildOfClass("Humanoid").Health > 0 then
-                if not localChar:FindFirstChild("Gun") and not LocalPlayer.Backpack:FindFirstChild("Gun") then
-                    local foundGun = nil
-                    for _, child in ipairs(workspace:GetChildren()) do
-                        if child.Name == "GunDrop" or (child:IsA("Tool") and child.Name == "Gun") then
-                            foundGun = child
-                            break
-                        end
-                    end
-                    
-                    if foundGun then
-                        local targetPart = foundGun:IsA("BasePart") and foundGun or foundGun:FindFirstChildWhichIsA("BasePart", true)
-                        if targetPart then
-                            teleportTo(targetPart.CFrame)
-                        end
-                    end
-                end
-            end
-        end
-    end
+	while task.wait(0.5) do
+		if _G.AutoPistolet then
+			local c = LP.Character
+			if c and c:FindFirstChild("HumanoidRootPart") and c:FindFirstChildOfClass("Humanoid") and c:FindFirstChildOfClass("Humanoid").Health > 0 then
+				if not c:FindFirstChild("Gun") and not LP.Backpack:FindFirstChild("Gun") then
+					local arme = nil
+					for _, e in ipairs(workspace:GetChildren()) do
+						if e.Name == "GunDrop" or (e:IsA("Tool") and e.Name == "Gun") then
+							arme = e break
+						end
+					end
+					if arme then
+						local partie = arme:IsA("BasePart") and arme or arme:FindFirstChildWhichIsA("BasePart", true)
+						if partie then
+							pcall(function() tp(partie.CFrame) end)
+						end
+					end
+				end
+			end
+		end
+	end
 end)
 
--- Aimbot FOV Circle & Loop
-local success, FOVCircle = pcall(function()
-    local circle = Drawing.new("Circle")
-    circle.Thickness = 1.5
-    circle.Color = Color3.fromRGB(255, 0, 100)
-    circle.Filled = false
-    circle.Visible = false
-    return circle
+-- Aimbot
+local okFOV, cercleFOV = pcall(function()
+	local c = Drawing.new("Circle")
+	c.Thickness = 1.5
+	c.Color = Color3.fromRGB(255, 0, 100)
+	c.Filled = false
+	c.Visible = false
+	return c
 end)
 
-local function getClosestPlayerToMouse()
-    local closestPlayer = nil
-    local shortestDistance = math.huge
-    local mousePos = UserInputService:GetMouseLocation()
-    
-    for _, player in ipairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") and player.Character:FindFirstChild("Head") then
-            local isTarget = false
-            local role = getRole(player)
-            
-            if _G.AimbotTarget == "Murderer" and role == "Murderer" then
-                isTarget = true
-            elseif _G.AimbotTarget == "Sheriff" and role == "Sheriff" then
-                isTarget = true
-            elseif _G.AimbotTarget == "All" then
-                isTarget = true
-            end
-            
-            if isTarget then
-                local screenPos, onScreen = Camera:WorldToViewportPoint(player.Character.Head.Position)
-                if onScreen then
-                    local distance = (Vector2.new(screenPos.X, screenPos.Y) - mousePos).Magnitude
-                    if distance < shortestDistance and distance <= _G.AimbotFOV then
-                        shortestDistance = distance
-                        closestPlayer = player
-                    end
-                end
-            end
-        end
-    end
-    return closestPlayer
+local function cibleLaPlusProche()
+	local plusProche = nil
+	local distMin = math.huge
+	local souris = UIS:GetMouseLocation()
+
+	for _, p in ipairs(Players:GetPlayers()) do
+		if p ~= LP and p.Character and p.Character:FindFirstChild("HumanoidRootPart") and p.Character:FindFirstChild("Head") then
+			local cible = false
+			local role = getRole(p)
+			if _G.CibleAimbot == "Murderer" and role == "Murderer" then cible = true
+			elseif _G.CibleAimbot == "Sheriff" and role == "Sheriff" then cible = true
+			elseif _G.CibleAimbot == "Tous" then cible = true end
+
+			if cible then
+				local ecran, visible = Camera:WorldToViewportPoint(p.Character.Head.Position)
+				if visible then
+					local d = (Vector2.new(ecran.X, ecran.Y) - souris).Magnitude
+					if d < distMin and d <= _G.FOVAimbot then
+						distMin = d
+						plusProche = p
+					end
+				end
+			end
+		end
+	end
+	return plusProche
 end
 
-game:GetService("RunService").RenderStepped:Connect(function()
-    if success and FOVCircle then
-        FOVCircle.Size = _G.AimbotFOV
-        FOVCircle.Position = UserInputService:GetMouseLocation()
-        FOVCircle.Visible = _G.AimbotEnabled and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2)
-    end
-    
-    if _G.AimbotEnabled and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
-        local target = getClosestPlayerToMouse()
-        if target and target.Character and target.Character:FindFirstChild("Head") then
-            local targetPos = target.Character.Head.Position
-            local currentCF = Camera.CFrame
-            local targetCF = CFrame.new(currentCF.Position, targetPos)
-            Camera.CFrame = currentCF:Lerp(targetCF, _G.AimbotSmoothness)
-        end
-    end
+RS.RenderStepped:Connect(function()
+	if okFOV and cercleFOV then
+		cercleFOV.Size = _G.FOVAimbot
+		cercleFOV.Position = UIS:GetMouseLocation()
+		cercleFOV.Visible = _G.Aimbot and UIS:IsMouseButtonPressed(Enum.UserInputType.MouseButton2)
+	end
+
+	if _G.Aimbot and UIS:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
+		local cible = cibleLaPlusProche()
+		if cible and cible.Character and cible.Character:FindFirstChild("Head") then
+			local posCible = cible.Character.Head.Position
+			local cfActuel = Camera.CFrame
+			Camera.CFrame = cfActuel:Lerp(CFrame.new(cfActuel.Position, posCible), _G.LissageAimbot)
+		end
+	end
 end)
 
--- Loop Noclip
+-- Noclip
 task.spawn(function()
-    game:GetService("RunService").Stepped:Connect(function()
-        if _G.NoclipEnabled or (_G.AutoFarmEnabled and _G.FarmMethod == "Tween") then
-            local char = LocalPlayer.Character
-            if char then
-                for _, part in ipairs(char:GetDescendants()) do
-                    if part:IsA("BasePart") then
-                        part.CanCollide = false
-                    end
-                end
-            end
-        end
-    end)
+	RS.Stepped:Connect(function()
+		if _G.Noclip or (_G.AutoFarm and _G.FarmMethode == "Tween") then
+			local c = LP.Character
+			if c then
+				for _, p in ipairs(c:GetDescendants()) do
+					if p:IsA("BasePart") then p.CanCollide = false end
+				end
+			end
+		end
+	end)
 end)
 
--- Loop Saut Infini
-UserInputService.JumpRequest:Connect(function()
-   if _G.InfJumpEnabled then
-      local char = LocalPlayer.Character
-      if char and char:FindFirstChildOfClass("Humanoid") then
-         char:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
-      end
-   end
+-- Saut infini
+UIS.JumpRequest:Connect(function()
+	if _G.SautInfini then
+		local c = LP.Character
+		if c and c:FindFirstChildOfClass("Humanoid") then
+			c:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
+		end
+	end
 end)
 
-Rayfield:Notify({Title = "Onyx v68", Content = "MM2 Script chargé avec succès !", Duration = 5})
-
+Rayfield:Notify({Title = "Le M MM2", Content = "Script chargé avec succès bg", Duration = 5})
