@@ -137,11 +137,11 @@ Farm:CreateToggle({ Name = "Activer l'Auto Farm", CurrentValue = false, Flag = "
 
 Farm:CreateDropdown({ Name = "Méthode", Options = {"Teleport", "Tween"}, CurrentOption = {"Teleport"}, MultipleOptions = false, Flag = "Meth", Callback = function(o) _G.Methode = o[1] end })
 
-Farm:CreateSlider({ Name = "Vitesse Tween", Min = 10, Max = 100, Default = 30, Color = Color3.fromRGB(0, 255, 100), Increment = 1, ValueName = "studs/s", Flag = "VT", Callback = function(v) _G.VitesseTween = v end })
+Farm:CreateSlider({ Name = "Vitesse Tween", Range = {10, 100}, CurrentValue = 30, Increment = 1, Suffix = "studs/s", Flag = "VT", Callback = function(v) _G.VitesseTween = v end })
 
 Farm:CreateToggle({ Name = "Éviter le Murderer", CurrentValue = true, Flag = "Ev", Callback = function(v) _G.EviterMurder = v end })
 
-Farm:CreateSlider({ Name = "Distance d'évitement", Min = 10, Max = 150, Default = 40, Color = Color3.fromRGB(255, 100, 0), Increment = 5, ValueName = "studs", Flag = "DE", Callback = function(v) _G.DistEvite = v end })
+Farm:CreateSlider({ Name = "Distance d'évitement", Range = {10, 150}, CurrentValue = 40, Increment = 5, Suffix = "studs", Flag = "DE", Callback = function(v) _G.DistEvite = v end })
 
 -- Onglet Tuer
 local Tuer = Fenetre:CreateTab("Tuer", 4483362458)
@@ -182,9 +182,9 @@ Combat:CreateToggle({ Name = "Activer l'Aimbot (Clic Droit)", CurrentValue = fal
 
 Combat:CreateDropdown({ Name = "Cible", Options = {"Murderer", "Sheriff", "Tous"}, CurrentOption = {"Murderer"}, MultipleOptions = false, Flag = "Cible", Callback = function(o) _G.CibleAim = o[1] end })
 
-Combat:CreateSlider({ Name = "Lissage", Min = 1, Max = 10, Default = 2, Color = Color3.fromRGB(0, 150, 255), Increment = 1, ValueName = "/10", Flag = "Liss", Callback = function(v) _G.Lissage = v / 10 end })
+Combat:CreateSlider({ Name = "Lissage", Range = {1, 10}, CurrentValue = 2, Increment = 1, Suffix = "/10", Flag = "Liss", Callback = function(v) _G.Lissage = v / 10 end })
 
-Combat:CreateSlider({ Name = "FOV", Min = 30, Max = 500, Default = 150, Color = Color3.fromRGB(255, 0, 100), Increment = 10, ValueName = "px", Flag = "FOV", Callback = function(v) _G.FOV = v end })
+Combat:CreateSlider({ Name = "FOV", Range = {30, 500}, CurrentValue = 150, Increment = 10, Suffix = "px", Flag = "FOV", Callback = function(v) _G.FOV = v end })
 
 Combat:CreateSection("Assistance")
 
@@ -202,13 +202,13 @@ Visu:CreateToggle({ Name = "ESP Pièces & Gemmes", CurrentValue = false, Flag = 
 local Mouv = Fenetre:CreateTab("Mouvements", 4483362458)
 Mouv:CreateSection("Modifications")
 
-Mouv:CreateSlider({ Name = "Vitesse (WalkSpeed)", Min = 16, Max = 150, Default = 16, Color = Color3.fromRGB(255, 255, 255), Increment = 1, ValueName = "studs/s", Flag = "WS", Callback = function(v)
+Mouv:CreateSlider({ Name = "Vitesse (WalkSpeed)", Range = {16, 150}, CurrentValue = 16, Increment = 1, Suffix = "studs/s", Flag = "WS", Callback = function(v)
 	ws = v
 	local c = LP.Character
 	if c and c:FindFirstChildOfClass("Humanoid") then c:FindFirstChildOfClass("Humanoid").WalkSpeed = v end
 end })
 
-Mouv:CreateSlider({ Name = "Saut (JumpPower)", Min = 50, Max = 250, Default = 50, Color = Color3.fromRGB(255, 255, 255), Increment = 5, ValueName = "studs", Flag = "JP", Callback = function(v)
+Mouv:CreateSlider({ Name = "Saut (JumpPower)", Range = {50, 250}, CurrentValue = 50, Increment = 5, Suffix = "studs", Flag = "JP", Callback = function(v)
 	jp = v
 	local c = LP.Character
 	if c and c:FindFirstChildOfClass("Humanoid") then
