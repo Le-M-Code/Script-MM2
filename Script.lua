@@ -1,4 +1,5 @@
-loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+if not Rayfield then return error("Rayfield pas chargé — CDN peut-être down") end
 
 local Players = game:GetService("Players")
 local LP = Players.LocalPlayer
