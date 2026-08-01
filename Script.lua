@@ -1,7 +1,7 @@
 --!strict
 --[[
     ================================================================
-    MM2 REBEL EDITION V4 - FULL FRENCH REPLICATED ENGINE & UI
+    Le M MM2 - ULTIMATE DARK EDITION (FR)
     Crafted by ENI & LO
     ================================================================
 ]]--
@@ -17,50 +17,48 @@ local TeleportService = game:GetService("TeleportService")
 
 local LocalPlayer = Players.LocalPlayer
 
---[[ Configuration System ]]--
+--[[ Sleek Dark Configuration ]]--
 local CONFIG = {
-    UI_NAME = "MM2 REBEL V4 (FR)",
-    MAIN_BG = Color3.fromRGB(15, 17, 26),
-    SIDEBAR_BG = Color3.fromRGB(20, 23, 34),
-    CARD_BG = Color3.fromRGB(28, 32, 47),
-    ACCENT_COLOR = Color3.fromRGB(0, 150, 255),
-    ACCENT_HOVER = Color3.fromRGB(30, 170, 255),
-    TEXT_COLOR = Color3.fromRGB(240, 240, 245),
-    SUBTEXT_COLOR = Color3.fromRGB(140, 145, 165),
-    BORDER_COLOR = Color3.fromRGB(45, 52, 75),
+    UI_NAME = "Le M MM2",
+    MAIN_BG = Color3.fromRGB(10, 10, 12),      -- Pure Deep Black
+    SIDEBAR_BG = Color3.fromRGB(15, 15, 18),   -- Dark Charcoal Sidebar
+    CARD_BG = Color3.fromRGB(22, 22, 26),      -- Dark Card Frame
+    ACCENT_COLOR = Color3.fromRGB(0, 140, 255), -- Electric Accent Blue
+    ACCENT_HOVER = Color3.fromRGB(30, 160, 255),
+    TEXT_COLOR = Color3.fromRGB(245, 245, 250),
+    SUBTEXT_COLOR = Color3.fromRGB(150, 150, 165),
+    BORDER_COLOR = Color3.fromRGB(35, 35, 42),
     CLOSE_RED = Color3.fromRGB(235, 60, 80),
-    MINI_BG = Color3.fromRGB(20, 23, 34),
-    FULL_MODE_SIZE = UDim2.new(0, 700, 0, 480),
+    MINI_BG = Color3.fromRGB(15, 15, 18),
+    FULL_MODE_SIZE = UDim2.new(0, 690, 0, 470),
     MINI_MODE_SIZE = UDim2.new(0, 44, 0, 44),
 }
 
---[[ Precise Icon Asset Mapping ]]--
+--[[ Verified Roblox Icon Asset Mapping ]]--
 local ICONS = {
-    Combat   = "rbxassetid://6035047409", -- Rocket / Fire
-    Target   = "rbxassetid://6035078735", -- Crosshair / Target
-    Misc     = "rbxassetid://6031094678", -- Plus / Add
-    Joueur   = "rbxassetid://6034287525", -- Users / Group
+    Combat   = "rbxassetid://6034808398", -- Swords / Crosshair
     Farming  = "rbxassetid://6034684937", -- Coins / Currency
-    Visuals  = "rbxassetid://6034560416", -- Eye / Vision
+    Target   = "rbxassetid://6035078735", -- Target Crosshair
+    Visuals  = "rbxassetid://6034560416", -- Eye Vision
+    Joueur   = "rbxassetid://6034287525", -- User / Player
+    Emotes   = "rbxassetid://6034947847", -- Star / Sparkle
+    Teleport = "rbxassetid://6031075929", -- Map Pin / Portal
     Webhook  = "rbxassetid://6034344541", -- Link / Webhook
     Settings = "rbxassetid://6031280882", -- Gear / Cog
-    Emotes   = "rbxassetid://6034947847", -- Star / Emotes
-    Teleport = "rbxassetid://6031075929", -- Map Pin
     Lock     = "rbxassetid://6031082533", -- Lock Icon
     Chevron  = "rbxassetid://6031091004", -- Right Chevron >
     Grid     = "rbxassetid://6034954449", -- Grid Icon
     Search   = "rbxassetid://6031154871", -- Search Icon
+    Drag     = "rbxassetid://6035067836", -- 4-Way Drag Icon
 }
 
 --[[ State Management ]]--
 local State = {
-    -- Farming
     AutoFarm = false,
-    FarmMode = "Plus Proche (Nearest)",
+    FarmMode = "Nearest",
     AutoGrabGun = false,
     DodgeKnife = false,
 
-    -- Combat
     KillAura = false,
     AuraDistance = 15,
     AutoKillAll = false,
@@ -71,19 +69,16 @@ local State = {
     FlingMurderer = false,
     AutoEndRound = false,
 
-    -- Target
     SelectedTarget = "",
     FlingTarget = false,
     SpectateTarget = false,
     LoopGoToTarget = false,
 
-    -- Visuals
     PlayerChams = false,
     GunCham = false,
     ThreeDRendering = false,
     NameESP = false,
 
-    -- Joueur
     WalkSpeedToggle = false,
     WalkSpeed = 16,
     JumpPowerToggle = false,
@@ -91,18 +86,15 @@ local State = {
     AntiFling = false,
     InvisibleFE = false,
 
-    -- Emotes & Commands
     AutoEmote = false,
     SelectedEmote = "ninja",
     SelectedCommand = "sit",
 
-    -- Webhook
     WebhookURL = "",
     CoinTracker = false,
     WebhookInterval = "5",
     UnboxNotification = false,
 
-    -- Settings
     AutoSaveSettings = true,
     AutoReExecute = false,
     AutoRejoin = false,
@@ -114,7 +106,7 @@ local function AddConnection(name, conn)
     Connections[name] = conn
 end
 
---[[ Helper UI Constructors ]]--
+--[[ UI Helper Functions ]]--
 local function ApplyCorner(parent, radius)
     local corner = Instance.new("UICorner")
     corner.CornerRadius = UDim.new(0, radius or 8)
@@ -132,19 +124,19 @@ local function ApplyStroke(parent, color, thickness, transparency)
     return stroke
 end
 
---[[ Clean Existing UI ]]--
+--[[ Clean Existing ScreenGui ]]--
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
-if PlayerGui:FindFirstChild("MM2_Rebel_UI") then
-    PlayerGui.MM2_Rebel_UI:Destroy()
+if PlayerGui:FindFirstChild("LeM_MM2_UI") then
+    PlayerGui.LeM_MM2_UI:Destroy()
 end
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "MM2_Rebel_UI"
+ScreenGui.Name = "LeM_MM2_UI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.DisplayOrder = 9999
 ScreenGui.Parent = PlayerGui
 
---[[ Floating Square Toggle Button (Petit Carré pour Cacher/Afficher le Menu) ]]--
+--[[ Petit Carré Flottant pour Cacher/Afficher (Mini Mode) ]]--
 local MiniToggleSquare = Instance.new("Frame")
 MiniToggleSquare.Name = "MiniToggleSquare"
 MiniToggleSquare.Size = CONFIG.MINI_MODE_SIZE
@@ -171,7 +163,7 @@ MiniIcon.Image = ICONS.Combat
 MiniIcon.ImageColor3 = CONFIG.ACCENT_COLOR
 MiniIcon.Parent = MiniToggleSquare
 
---[[ Main Window Container ]]--
+--[[ Window Main Container ]]--
 local MainContainer = Instance.new("Frame")
 MainContainer.Name = "MainContainer"
 MainContainer.Size = CONFIG.FULL_MODE_SIZE
@@ -181,7 +173,7 @@ MainContainer.BorderSizePixel = 0
 MainContainer.ClipsDescendants = false
 MainContainer.Parent = ScreenGui
 ApplyCorner(MainContainer, 12)
-ApplyStroke(MainContainer, CONFIG.BORDER_COLOR, 1.5, 0.3)
+ApplyStroke(MainContainer, CONFIG.BORDER_COLOR, 1.5, 0.4)
 
 -- Header Bar
 local Header = Instance.new("Frame")
@@ -206,7 +198,7 @@ HeaderDivider.BackgroundColor3 = CONFIG.BORDER_COLOR
 HeaderDivider.BorderSizePixel = 0
 HeaderDivider.Parent = Header
 
--- Left Square Button in Header to Hide Menu
+-- Left Square Hide/Collapse Button
 local HideMenuSquare = Instance.new("TextButton")
 HideMenuSquare.Name = "HideMenuSquare"
 HideMenuSquare.Size = UDim2.new(0, 28, 0, 28)
@@ -225,10 +217,10 @@ HideMenuIcon.Image = ICONS.Combat
 HideMenuIcon.ImageColor3 = CONFIG.ACCENT_COLOR
 HideMenuIcon.Parent = HideMenuSquare
 
--- Title
+-- Title Label "Le M MM2"
 local TitleLabel = Instance.new("TextLabel")
 TitleLabel.Name = "TitleLabel"
-TitleLabel.Size = UDim2.new(0, 220, 1, 0)
+TitleLabel.Size = UDim2.new(0, 200, 1, 0)
 TitleLabel.Position = UDim2.new(0, 46, 0, 0)
 TitleLabel.Text = CONFIG.UI_NAME
 TitleLabel.TextColor3 = CONFIG.TEXT_COLOR
@@ -238,7 +230,7 @@ TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
 TitleLabel.BackgroundTransparency = 1
 TitleLabel.Parent = Header
 
--- Top Right Controls (- and X)
+-- Right Controls (- and X)
 local ControlsFrame = Instance.new("Frame")
 ControlsFrame.Size = UDim2.new(0, 80, 1, 0)
 ControlsFrame.Position = UDim2.new(1, -85, 0, 0)
@@ -248,7 +240,7 @@ ControlsFrame.Parent = Header
 local MinButton = Instance.new("TextButton")
 MinButton.Size = UDim2.new(0, 28, 0, 28)
 MinButton.Position = UDim2.new(0, 8, 0.5, -14)
-MinButton.BackgroundColor3 = Color3.fromRGB(35, 40, 58)
+MinButton.BackgroundColor3 = Color3.fromRGB(28, 28, 34)
 MinButton.Text = "-"
 MinButton.TextColor3 = CONFIG.TEXT_COLOR
 MinButton.TextSize = 18
@@ -259,7 +251,7 @@ ApplyCorner(MinButton, 6)
 local CloseButton = Instance.new("TextButton")
 CloseButton.Size = UDim2.new(0, 28, 0, 28)
 CloseButton.Position = UDim2.new(0, 44, 0.5, -14)
-CloseButton.BackgroundColor3 = Color3.fromRGB(45, 30, 40)
+CloseButton.BackgroundColor3 = Color3.fromRGB(40, 24, 30)
 CloseButton.Text = "X"
 CloseButton.TextColor3 = CONFIG.CLOSE_RED
 CloseButton.TextSize = 14
@@ -267,7 +259,7 @@ CloseButton.Font = Enum.Font.GothamBold
 CloseButton.Parent = ControlsFrame
 ApplyCorner(CloseButton, 6)
 
--- Menu Toggle Logic
+-- Toggle Menu Visibility Function
 local isUIOpen = true
 local function toggleUI()
     isUIOpen = not isUIOpen
@@ -306,7 +298,7 @@ CloseButton.MouseButton1Click:Connect(function()
     for _, conn in pairs(Connections) do conn:Disconnect() end
 end)
 
--- Dragging System
+-- Dragging Mechanics
 local function makeDraggable(frame, handle)
     local dragging, dragStart, startPos
     handle.InputBegan:Connect(function(input)
@@ -330,7 +322,7 @@ end
 makeDraggable(MainContainer, Header)
 makeDraggable(MiniToggleSquare, MiniToggleSquare)
 
---[[ Sidebar & Profile Card ]]--
+--[[ Sidebar Container ]]--
 local Sidebar = Instance.new("Frame")
 Sidebar.Name = "Sidebar"
 Sidebar.Size = UDim2.new(0, 175, 1, -45)
@@ -369,7 +361,7 @@ TabPadding.PaddingLeft = UDim.new(0, 8)
 TabPadding.PaddingRight = UDim.new(0, 8)
 TabPadding.Parent = TabScroll
 
--- Player Profile Box (Bottom Sidebar)
+-- Player Profile Box (Bottom Sidebar - Image 3)
 local ProfileFrame = Instance.new("Frame")
 ProfileFrame.Name = "ProfileFrame"
 ProfileFrame.Size = UDim2.new(1, -16, 0, 52)
@@ -384,7 +376,7 @@ local AvatarImage = Instance.new("ImageLabel")
 AvatarImage.Name = "AvatarImage"
 AvatarImage.Size = UDim2.new(0, 36, 0, 36)
 AvatarImage.Position = UDim2.new(0, 8, 0.5, -18)
-AvatarImage.BackgroundColor3 = Color3.fromRGB(15, 17, 26)
+AvatarImage.BackgroundColor3 = Color3.fromRGB(10, 10, 12)
 AvatarImage.Parent = ProfileFrame
 ApplyCorner(AvatarImage, 18)
 
@@ -519,7 +511,7 @@ end
 
 --[[ Replicated Component Builders ]]--
 
--- Toggle Switch
+-- Toggle Component
 local function createToggle(parent, title, desc, isLocked, default, callback)
     local card = Instance.new("Frame")
     card.Size = UDim2.new(1, -6, 0, desc and 48 or 42)
@@ -566,7 +558,7 @@ local function createToggle(parent, title, desc, isLocked, default, callback)
     local toggleSwitch = Instance.new("TextButton")
     toggleSwitch.Size = UDim2.new(0, 42, 0, 22)
     toggleSwitch.Position = UDim2.new(1, -54, 0.5, -11)
-    toggleSwitch.BackgroundColor3 = default and CONFIG.ACCENT_COLOR or Color3.fromRGB(45, 50, 68)
+    toggleSwitch.BackgroundColor3 = default and CONFIG.ACCENT_COLOR or Color3.fromRGB(38, 38, 48)
     toggleSwitch.Text = ""
     toggleSwitch.AutoButtonColor = false
     toggleSwitch.Parent = card
@@ -584,7 +576,7 @@ local function createToggle(parent, title, desc, isLocked, default, callback)
 
     local function updateState()
         local targetPos = isOn and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
-        local targetColor = isOn and CONFIG.ACCENT_COLOR or Color3.fromRGB(45, 50, 68)
+        local targetColor = isOn and CONFIG.ACCENT_COLOR or Color3.fromRGB(38, 38, 48)
         TweenService:Create(indicator, TweenInfo.new(0.2), {Position = targetPos}):Play()
         TweenService:Create(toggleSwitch, TweenInfo.new(0.2), {BackgroundColor3 = targetColor}):Play()
         task.spawn(callback, isOn)
@@ -623,7 +615,7 @@ local function createSlider(parent, title, min, max, default, callback)
     local valueBox = Instance.new("Frame")
     valueBox.Size = UDim2.new(0, 44, 0, 22)
     valueBox.Position = UDim2.new(1, -56, 0, 6)
-    valueBox.BackgroundColor3 = Color3.fromRGB(20, 24, 36)
+    valueBox.BackgroundColor3 = Color3.fromRGB(15, 15, 18)
     valueBox.Parent = card
     ApplyCorner(valueBox, 5)
 
@@ -639,7 +631,7 @@ local function createSlider(parent, title, min, max, default, callback)
     local sliderBar = Instance.new("Frame")
     sliderBar.Size = UDim2.new(1, -24, 0, 6)
     sliderBar.Position = UDim2.new(0, 12, 0, 36)
-    sliderBar.BackgroundColor3 = Color3.fromRGB(45, 50, 68)
+    sliderBar.BackgroundColor3 = Color3.fromRGB(38, 38, 48)
     sliderBar.BorderSizePixel = 0
     sliderBar.Parent = card
     ApplyCorner(sliderBar, 3)
@@ -684,7 +676,7 @@ local function createSlider(parent, title, min, max, default, callback)
     return card
 end
 
--- Action Button (With optional chevron > or lock icon)
+-- Action Button Component
 local function createActionButton(parent, title, iconType, isLocked, callback)
     local card = Instance.new("Frame")
     card.Size = UDim2.new(1, -6, 0, 42)
@@ -730,7 +722,7 @@ local function createActionButton(parent, title, iconType, isLocked, callback)
     actionIcon.Parent = btn
 
     btn.MouseEnter:Connect(function()
-        TweenService:Create(card, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(36, 42, 62)}):Play()
+        TweenService:Create(card, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(30, 30, 36)}):Play()
     end)
     btn.MouseLeave:Connect(function()
         TweenService:Create(card, TweenInfo.new(0.2), {BackgroundColor3 = CONFIG.CARD_BG}):Play()
@@ -742,26 +734,27 @@ local function createActionButton(parent, title, iconType, isLocked, callback)
     return card
 end
 
--- Custom Dropdown with Grid & Search Support
+-- Inline Expandable Dropdown (Fixes Image 11 bug completely!)
 local function createDropdown(parent, title, currentVal, options, hasSearch, callback)
     local card = Instance.new("Frame")
-    card.Size = UDim2.new(1, -6, 0, 52)
+    card.Name = title .. "DropdownCard"
+    card.Size = UDim2.new(1, -6, 0, 50)
     card.BackgroundColor3 = CONFIG.CARD_BG
     card.BorderSizePixel = 0
-    card.ClipsDescendants = false
+    card.ClipsDescendants = true
     card.Parent = parent
     ApplyCorner(card, 8)
     ApplyStroke(card, CONFIG.BORDER_COLOR, 1, 0.6)
 
     local headerBtn = Instance.new("TextButton")
-    headerBtn.Size = UDim2.new(1, 0, 0, 52)
+    headerBtn.Size = UDim2.new(1, 0, 0, 50)
     headerBtn.BackgroundTransparency = 1
     headerBtn.Text = ""
     headerBtn.Parent = card
 
     local titleLabel = Instance.new("TextLabel")
-    titleLabel.Size = UDim2.new(1, -70, 0, 20)
-    titleLabel.Position = UDim2.new(0, 12, 0, 6)
+    titleLabel.Size = UDim2.new(1, -70, 1, 0)
+    titleLabel.Position = UDim2.new(0, 12, 0, 0)
     titleLabel.Text = title .. " • " .. currentVal
     titleLabel.TextColor3 = CONFIG.TEXT_COLOR
     titleLabel.TextSize = 13
@@ -779,26 +772,15 @@ local function createDropdown(parent, title, currentVal, options, hasSearch, cal
     gridIcon.Parent = headerBtn
 
     local optionsFrame = Instance.new("Frame")
-    optionsFrame.Size = UDim2.new(1, 0, 0, 0)
-    optionsFrame.Position = UDim2.new(0, 0, 1, 4)
-    optionsFrame.BackgroundColor3 = CONFIG.SIDEBAR_BG
-    optionsFrame.Visible = false
-    optionsFrame.ZIndex = 200
+    optionsFrame.Size = UDim2.new(1, -24, 0, 0)
+    optionsFrame.Position = UDim2.new(0, 12, 0, 50)
+    optionsFrame.BackgroundTransparency = 1
     optionsFrame.Parent = card
-    ApplyCorner(optionsFrame, 8)
-    ApplyStroke(optionsFrame, CONFIG.ACCENT_COLOR, 1, 0.4)
 
     local listLayout = Instance.new("UIListLayout")
     listLayout.SortOrder = Enum.SortOrder.LayoutOrder
     listLayout.Padding = UDim.new(0, 4)
     listLayout.Parent = optionsFrame
-
-    local listPadding = Instance.new("UIPadding")
-    listPadding.PaddingTop = UDim.new(0, 6)
-    listPadding.PaddingBottom = UDim.new(0, 6)
-    listPadding.PaddingLeft = UDim.new(0, 6)
-    listPadding.PaddingRight = UDim.new(0, 6)
-    listPadding.Parent = optionsFrame
 
     local isOpen = false
 
@@ -810,8 +792,7 @@ local function createDropdown(parent, title, currentVal, options, hasSearch, cal
         if hasSearch then
             local searchBox = Instance.new("Frame")
             searchBox.Size = UDim2.new(1, 0, 0, 28)
-            searchBox.BackgroundColor3 = Color3.fromRGB(25, 29, 42)
-            searchBox.ZIndex = 201
+            searchBox.BackgroundColor3 = Color3.fromRGB(15, 15, 18)
             searchBox.Parent = optionsFrame
             ApplyCorner(searchBox, 6)
 
@@ -821,7 +802,6 @@ local function createDropdown(parent, title, currentVal, options, hasSearch, cal
             sIcon.BackgroundTransparency = 1
             sIcon.Image = ICONS.Search
             sIcon.ImageColor3 = CONFIG.SUBTEXT_COLOR
-            sIcon.ZIndex = 202
             sIcon.Parent = searchBox
 
             local sInput = Instance.new("TextBox")
@@ -835,7 +815,6 @@ local function createDropdown(parent, title, currentVal, options, hasSearch, cal
             sInput.TextSize = 11
             sInput.Font = Enum.Font.Gotham
             sInput.TextXAlignment = Enum.TextXAlignment.Left
-            sInput.ZIndex = 202
             sInput.Parent = searchBox
 
             sInput.Changed:Connect(function(prop)
@@ -849,13 +828,12 @@ local function createDropdown(parent, title, currentVal, options, hasSearch, cal
                 count = count + 1
                 local optBtn = Instance.new("TextButton")
                 optBtn.Size = UDim2.new(1, 0, 0, 28)
-                optBtn.BackgroundColor3 = (opt == currentVal) and CONFIG.CARD_BG or CONFIG.SIDEBAR_BG
+                optBtn.BackgroundColor3 = (opt == currentVal) and Color3.fromRGB(30, 30, 36) or Color3.fromRGB(15, 15, 18)
                 optBtn.Text = "  " .. (opt == currentVal and "✓ " or "") .. opt
                 optBtn.TextColor3 = (opt == currentVal) and CONFIG.ACCENT_COLOR or CONFIG.TEXT_COLOR
                 optBtn.TextSize = 12
                 optBtn.Font = Enum.Font.GothamMedium
                 optBtn.TextXAlignment = Enum.TextXAlignment.Left
-                optBtn.ZIndex = 201
                 optBtn.Parent = optionsFrame
                 ApplyCorner(optBtn, 6)
 
@@ -863,20 +841,28 @@ local function createDropdown(parent, title, currentVal, options, hasSearch, cal
                     currentVal = opt
                     titleLabel.Text = title .. " • " .. currentVal
                     isOpen = false
-                    optionsFrame.Visible = false
+                    TweenService:Create(card, TweenInfo.new(0.25), {Size = UDim2.new(1, -6, 0, 50)}):Play()
                     task.spawn(callback, opt)
                 end)
             end
         end
 
         local extraHeight = hasSearch and 34 or 0
-        optionsFrame.Size = UDim2.new(1, 0, 0, math.clamp(count * 32 + 12 + extraHeight, 40, 180))
+        local totalContentHeight = count * 32 + extraHeight + 10
+        optionsFrame.Size = UDim2.new(1, -24, 0, totalContentHeight)
+        
+        if isOpen then
+            TweenService:Create(card, TweenInfo.new(0.25), {Size = UDim2.new(1, -6, 0, 50 + totalContentHeight)}):Play()
+        end
     end
 
     headerBtn.MouseButton1Click:Connect(function()
         isOpen = not isOpen
-        optionsFrame.Visible = isOpen
-        if isOpen then renderOptions("") end
+        if isOpen then
+            renderOptions("")
+        else
+            TweenService:Create(card, TweenInfo.new(0.25), {Size = UDim2.new(1, -6, 0, 50)}):Play()
+        end
     end)
 
     return card
@@ -906,7 +892,7 @@ local function createTextBox(parent, title, placeholder, callback)
     local inputContainer = Instance.new("Frame")
     inputContainer.Size = UDim2.new(1, -24, 0, 22)
     inputContainer.Position = UDim2.new(0, 12, 0, 24)
-    inputContainer.BackgroundColor3 = Color3.fromRGB(20, 24, 36)
+    inputContainer.BackgroundColor3 = Color3.fromRGB(15, 15, 18)
     inputContainer.Parent = card
     ApplyCorner(inputContainer, 5)
 
@@ -937,13 +923,12 @@ local FarmingTab  = createTab("Farming", ICONS.Farming)
 local TargetTab   = createTab("Target", ICONS.Target)
 local VisualsTab  = createTab("Visuals", ICONS.Visuals)
 local JoueurTab   = createTab("Joueur", ICONS.Joueur)
-local EmotesTab   = createTab("Emotes", ICONS.Emotes)
+local EmotesTab   = createTab("Émotes", ICONS.Emotes)
 local TeleportTab = createTab("Téléport", ICONS.Teleport)
 local WebhookTab  = createTab("Webhook", ICONS.Webhook)
 local SettingsTab = createTab("Réglages", ICONS.Settings)
 
---[[ Features Implementation ]]--
-
+--[[ Features Engine ]]--
 local function GetRoles()
     local murderer, sheriff
     for _, plr in ipairs(Players:GetPlayers()) do
@@ -1294,4 +1279,6 @@ createActionButton(SettingsTab, "Server Hop", "chevron", false, function()
     TeleportService:Teleport(game.PlaceId, LocalPlayer)
 end)
 
-print("MM2 REBEL EDITION V4 (FR) LOADED SUCCESSFULLY!")
+print("=========================================")
+print("Le M MM2 - ULTIMATE DARK EDITION LOADED!")
+print("=========================================")
