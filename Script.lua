@@ -1,8 +1,8 @@
 --!strict
 --[[
     ================================================================
-    MM2 REBEL EDITION - ULTRA BOOSTED & ULTRA CLEAN UI
-    Engineered by ENI & LO
+    MM2 REBEL EDITION V3 - PERFECTED UI & FULL FEATURES
+    Crafted by ENI & LO
     ================================================================
 ]]--
 
@@ -13,14 +13,12 @@ local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local HttpService = game:GetService("HttpService")
 local Workspace = game:GetService("Workspace")
-local Lighting = game:GetService("Lighting")
 
 local LocalPlayer = Players.LocalPlayer
-local Mouse = LocalPlayer:GetMouse()
 
 --[[ Configuration System ]]--
 local CONFIG = {
-    UI_NAME = "MM2 REBEL V2",
+    UI_NAME = "MM2 REBEL V3",
     MAIN_BG = Color3.fromRGB(15, 17, 26),
     SIDEBAR_BG = Color3.fromRGB(20, 23, 34),
     CARD_BG = Color3.fromRGB(28, 32, 47),
@@ -30,28 +28,26 @@ local CONFIG = {
     SUBTEXT_COLOR = Color3.fromRGB(140, 145, 165),
     BORDER_COLOR = Color3.fromRGB(45, 52, 75),
     CLOSE_RED = Color3.fromRGB(235, 60, 80),
-    MINI_BG = Color3.fromRGB(0, 140, 240),
-    FULL_MODE_SIZE = UDim2.new(0, 680, 0, 440),
-    MINI_MODE_SIZE = UDim2.new(0, 48, 0, 48),
+    MINI_BG = Color3.fromRGB(20, 23, 34),
+    FULL_MODE_SIZE = UDim2.new(0, 680, 0, 460),
+    MINI_MODE_SIZE = UDim2.new(0, 44, 0, 44),
 }
 
---[[ Clean Modern Icons (Lucide / Standard Clean Assets) ]]--
+--[[ Precise Icon Asset Mapping ]]--
 local ICONS = {
-    Combat   = "rbxassetid://6034808398",
-    Farming  = "rbxassetid://6034684937",
-    Visuals  = "rbxassetid://6034560416",
-    Joueur   = "rbxassetid://6034287525",
-    Target   = "rbxassetid://6035078735",
-    Webhook  = "rbxassetid://6034344541",
-    Misc     = "rbxassetid://6034954449",
-    Settings = "rbxassetid://6031280882",
-    Chevron  = "rbxassetid://6031091004",
-    Close    = "rbxassetid://6031094678",
-    Minimize = "rbxassetid://6031094667",
-    Search   = "rbxassetid://6031154871",
+    Combat   = "rbxassetid://6035047409", -- Rocket / Fire
+    Target   = "rbxassetid://6035078735", -- Crosshair / Target
+    Misc     = "rbxassetid://6031094678", -- Plus / Add
+    Joueur   = "rbxassetid://6034287525", -- Users / Group
+    Farming  = "rbxassetid://6034684937", -- Coins / Currency
+    Visuals  = "rbxassetid://6034560416", -- Eye / Vision
+    Webhook  = "rbxassetid://6034344541", -- Link / Webhook
+    Settings = "rbxassetid://6031280882", -- Gear / Cog
+    Chevron  = "rbxassetid://6031091004", -- Down Arrow
+    HideMenu = "rbxassetid://6031094678", -- Collapse/Hide icon
 }
 
---[[ Active Hacks & State Storage ]]--
+--[[ State Management ]]--
 local State = {
     AutoFarm = false,
     FarmSpeed = 25,
@@ -59,29 +55,22 @@ local State = {
     AutoShootMurderer = false,
     AutoGrabGun = false,
     ESP_Players = false,
-    ESP_Gun = false,
-    ESP_Tracers = false,
     WalkSpeed = 16,
     JumpPower = 50,
     InfiniteJump = false,
     Noclip = false,
-    Fly = false,
     SelectedTarget = "",
     Spectating = false,
     WebhookURL = "",
-    WebhookEnabled = false,
 }
 
 local Connections = {}
-
 local function AddConnection(name, conn)
-    if Connections[name] then
-        Connections[name]:Disconnect()
-    end
+    if Connections[name] then Connections[name]:Disconnect() end
     Connections[name] = conn
 end
 
---[[ Helper UI Constructors ]]--
+--[[ Helper UI Functions ]]--
 local function ApplyCorner(parent, radius)
     local corner = Instance.new("UICorner")
     corner.CornerRadius = UDim.new(0, radius or 8)
@@ -99,25 +88,7 @@ local function ApplyStroke(parent, color, thickness, transparency)
     return stroke
 end
 
-local function CreateShadow(parent)
-    -- Sleek dark drop shadow
-    local shadow = Instance.new("ImageLabel")
-    shadow.Name = "Shadow"
-    shadow.AnchorPoint = Vector2.new(0.5, 0.5)
-    shadow.Position = UDim2.new(0.5, 0, 0.5, 4)
-    shadow.Size = UDim2.new(1, 24, 1, 24)
-    shadow.BackgroundTransparency = 1
-    shadow.Image = "rbxassetid://1316045217"
-    shadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
-    shadow.ImageTransparency = 0.4
-    shadow.ScaleType = Enum.ScaleType.Slice
-    shadow.SliceCenter = Rect.new(10, 10, 118, 118)
-    shadow.ZIndex = parent.ZIndex - 1
-    shadow.Parent = parent
-    return shadow
-end
-
---[[ Main UI Screen ]]--
+--[[ Clean Existing UI ]]--
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 if PlayerGui:FindFirstChild("MM2_Rebel_UI") then
     PlayerGui.MM2_Rebel_UI:Destroy()
@@ -129,18 +100,44 @@ ScreenGui.ResetOnSpawn = false
 ScreenGui.DisplayOrder = 9999
 ScreenGui.Parent = PlayerGui
 
--- Main Container Window
+--[[ Floating Square Toggle Button (Petit Carré pour Cacher/Afficher le Menu) ]]--
+local MiniToggleSquare = Instance.new("Frame")
+MiniToggleSquare.Name = "MiniToggleSquare"
+MiniToggleSquare.Size = CONFIG.MINI_MODE_SIZE
+MiniToggleSquare.Position = UDim2.new(0, 18, 0, 18)
+MiniToggleSquare.BackgroundColor3 = CONFIG.MINI_BG
+MiniToggleSquare.BorderSizePixel = 0
+MiniToggleSquare.ZIndex = 10000
+MiniToggleSquare.Visible = false
+MiniToggleSquare.Parent = ScreenGui
+ApplyCorner(MiniToggleSquare, 10)
+ApplyStroke(MiniToggleSquare, CONFIG.ACCENT_COLOR, 1.5, 0.2)
+
+local MiniBtn = Instance.new("TextButton")
+MiniBtn.Size = UDim2.new(1, 0, 1, 0)
+MiniBtn.BackgroundTransparency = 1
+MiniBtn.Text = ""
+MiniBtn.Parent = MiniToggleSquare
+
+local MiniIcon = Instance.new("ImageLabel")
+MiniIcon.Size = UDim2.new(0, 22, 0, 22)
+MiniIcon.Position = UDim2.new(0.5, -11, 0.5, -11)
+MiniIcon.BackgroundTransparency = 1
+MiniIcon.Image = ICONS.Combat
+MiniIcon.ImageColor3 = CONFIG.ACCENT_COLOR
+MiniIcon.Parent = MiniToggleSquare
+
+--[[ Main Window ]]--
 local MainContainer = Instance.new("Frame")
 MainContainer.Name = "MainContainer"
 MainContainer.Size = CONFIG.FULL_MODE_SIZE
 MainContainer.Position = UDim2.new(0.5, -CONFIG.FULL_MODE_SIZE.X.Offset / 2, 0.5, -CONFIG.FULL_MODE_SIZE.Y.Offset / 2)
 MainContainer.BackgroundColor3 = CONFIG.MAIN_BG
 MainContainer.BorderSizePixel = 0
-MainContainer.ClipsDescendants = true
+MainContainer.ClipsDescendants = false
 MainContainer.Parent = ScreenGui
 ApplyCorner(MainContainer, 12)
 ApplyStroke(MainContainer, CONFIG.BORDER_COLOR, 1.5, 0.3)
-CreateShadow(MainContainer)
 
 -- Header Bar
 local Header = Instance.new("Frame")
@@ -151,7 +148,6 @@ Header.BorderSizePixel = 0
 Header.Parent = MainContainer
 ApplyCorner(Header, 12)
 
--- Cover bottom corners of Header so it blends seamlessly
 local HeaderBottomFix = Instance.new("Frame")
 HeaderBottomFix.Size = UDim2.new(1, 0, 0, 10)
 HeaderBottomFix.Position = UDim2.new(0, 0, 1, -10)
@@ -166,28 +162,39 @@ HeaderDivider.BackgroundColor3 = CONFIG.BORDER_COLOR
 HeaderDivider.BorderSizePixel = 0
 HeaderDivider.Parent = Header
 
--- Title & Logo
-local LogoIcon = Instance.new("ImageLabel")
-LogoIcon.Size = UDim2.new(0, 22, 0, 22)
-LogoIcon.Position = UDim2.new(0, 14, 0.5, -11)
-LogoIcon.BackgroundTransparency = 1
-LogoIcon.Image = ICONS.Combat
-LogoIcon.ImageColor3 = CONFIG.ACCENT_COLOR
-LogoIcon.Parent = Header
+-- Left Collapse/Hide Button (Square in Header)
+local HideMenuSquare = Instance.new("TextButton")
+HideMenuSquare.Name = "HideMenuSquare"
+HideMenuSquare.Size = UDim2.new(0, 28, 0, 28)
+HideMenuSquare.Position = UDim2.new(0, 10, 0.5, -14)
+HideMenuSquare.BackgroundColor3 = CONFIG.CARD_BG
+HideMenuSquare.Text = ""
+HideMenuSquare.Parent = Header
+ApplyCorner(HideMenuSquare, 6)
+ApplyStroke(HideMenuSquare, CONFIG.BORDER_COLOR, 1, 0.5)
 
+local HideMenuIcon = Instance.new("ImageLabel")
+HideMenuIcon.Size = UDim2.new(0, 16, 0, 16)
+HideMenuIcon.Position = UDim2.new(0.5, -8, 0.5, -8)
+HideMenuIcon.BackgroundTransparency = 1
+HideMenuIcon.Image = ICONS.Combat
+HideMenuIcon.ImageColor3 = CONFIG.ACCENT_COLOR
+HideMenuIcon.Parent = HideMenuSquare
+
+-- Title
 local TitleLabel = Instance.new("TextLabel")
 TitleLabel.Name = "TitleLabel"
 TitleLabel.Size = UDim2.new(0, 200, 1, 0)
-TitleLabel.Position = UDim2.new(0, 44, 0, 0)
+TitleLabel.Position = UDim2.new(0, 46, 0, 0)
 TitleLabel.Text = CONFIG.UI_NAME
 TitleLabel.TextColor3 = CONFIG.TEXT_COLOR
-TitleLabel.TextSize = 16
+TitleLabel.TextSize = 15
 TitleLabel.Font = Enum.Font.GothamBold
 TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
 TitleLabel.BackgroundTransparency = 1
 TitleLabel.Parent = Header
 
--- Window Controls (Minimize & Close)
+-- Top Right Controls (Minimize & Close)
 local ControlsFrame = Instance.new("Frame")
 ControlsFrame.Size = UDim2.new(0, 80, 1, 0)
 ControlsFrame.Position = UDim2.new(1, -85, 0, 0)
@@ -195,7 +202,6 @@ ControlsFrame.BackgroundTransparency = 1
 ControlsFrame.Parent = Header
 
 local MinButton = Instance.new("TextButton")
-MinButton.Name = "MinButton"
 MinButton.Size = UDim2.new(0, 28, 0, 28)
 MinButton.Position = UDim2.new(0, 8, 0.5, -14)
 MinButton.BackgroundColor3 = Color3.fromRGB(35, 40, 58)
@@ -207,7 +213,6 @@ MinButton.Parent = ControlsFrame
 ApplyCorner(MinButton, 6)
 
 local CloseButton = Instance.new("TextButton")
-CloseButton.Name = "CloseButton"
 CloseButton.Size = UDim2.new(0, 28, 0, 28)
 CloseButton.Position = UDim2.new(0, 44, 0.5, -14)
 CloseButton.BackgroundColor3 = Color3.fromRGB(45, 30, 40)
@@ -218,24 +223,73 @@ CloseButton.Font = Enum.Font.GothamBold
 CloseButton.Parent = ControlsFrame
 ApplyCorner(CloseButton, 6)
 
-MinButton.MouseEnter:Connect(function()
-    TweenService:Create(MinButton, TweenInfo.new(0.2), {BackgroundColor3 = CONFIG.ACCENT_COLOR, TextColor3 = Color3.new(1,1,1)}):Play()
-end)
-MinButton.MouseLeave:Connect(function()
-    TweenService:Create(MinButton, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(35, 40, 58), TextColor3 = CONFIG.TEXT_COLOR}):Play()
+-- Menu Toggle Visibility Function
+local isUIOpen = true
+local function toggleUI()
+    isUIOpen = not isUIOpen
+    local tweenInfo = TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+
+    if isUIOpen then
+        MainContainer.Visible = true
+        MainContainer.Size = UDim2.new(0, 0, 0, 0)
+        MainContainer.Position = MiniToggleSquare.Position
+        
+        TweenService:Create(MainContainer, tweenInfo, {
+            Size = CONFIG.FULL_MODE_SIZE,
+            Position = UDim2.new(0.5, -CONFIG.FULL_MODE_SIZE.X.Offset / 2, 0.5, -CONFIG.FULL_MODE_SIZE.Y.Offset / 2)
+        }):Play()
+
+        TweenService:Create(MiniToggleSquare, tweenInfo, {Size = UDim2.new(0, 0, 0, 0)}):Play()
+        task.delay(0.35, function() MiniToggleSquare.Visible = false end)
+    else
+        TweenService:Create(MainContainer, tweenInfo, {
+            Size = UDim2.new(0, 0, 0, 0),
+            Position = MiniToggleSquare.Position
+        }):Play()
+
+        MiniToggleSquare.Visible = true
+        MiniToggleSquare.Size = UDim2.new(0, 0, 0, 0)
+        TweenService:Create(MiniToggleSquare, tweenInfo, {Size = CONFIG.MINI_MODE_SIZE}):Play()
+        task.delay(0.35, function() MainContainer.Visible = false end)
+    end
+end
+
+MinButton.MouseButton1Click:Connect(toggleUI)
+HideMenuSquare.MouseButton1Click:Connect(toggleUI)
+MiniBtn.MouseButton1Click:Connect(toggleUI)
+CloseButton.MouseButton1Click:Connect(function()
+    ScreenGui:Destroy()
+    for _, conn in pairs(Connections) do conn:Disconnect() end
 end)
 
-CloseButton.MouseEnter:Connect(function()
-    TweenService:Create(CloseButton, TweenInfo.new(0.2), {BackgroundColor3 = CONFIG.CLOSE_RED, TextColor3 = Color3.new(1,1,1)}):Play()
-end)
-CloseButton.MouseLeave:Connect(function()
-    TweenService:Create(CloseButton, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(45, 30, 40), TextColor3 = CONFIG.CLOSE_RED}):Play()
-end)
+--[[ Dragging Support ]]--
+local function makeDraggable(frame, handle)
+    local dragging, dragStart, startPos
+    handle.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            dragStart = input.Position
+            startPos = frame.Position
+        end
+    end)
+    handle.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local delta = input.Position - dragStart
+            frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+end
 
--- Sidebar Layout
+makeDraggable(MainContainer, Header)
+makeDraggable(MiniToggleSquare, MiniToggleSquare)
+
+--[[ Sidebar Container ]]--
 local Sidebar = Instance.new("Frame")
 Sidebar.Name = "Sidebar"
-Sidebar.Size = UDim2.new(0, 160, 1, -45)
+Sidebar.Size = UDim2.new(0, 175, 1, -45)
 Sidebar.Position = UDim2.new(0, 0, 0, 45)
 Sidebar.BackgroundColor3 = CONFIG.SIDEBAR_BG
 Sidebar.BorderSizePixel = 0
@@ -248,132 +302,107 @@ SidebarDivider.BackgroundColor3 = CONFIG.BORDER_COLOR
 SidebarDivider.BorderSizePixel = 0
 SidebarDivider.Parent = Sidebar
 
+-- Tab List Scrolling Container
+local TabScroll = Instance.new("ScrollingFrame")
+TabScroll.Name = "TabScroll"
+TabScroll.Size = UDim2.new(1, 0, 1, -65) -- Leave space for player profile at bottom
+TabScroll.BackgroundTransparency = 1
+TabScroll.BorderSizePixel = 0
+TabScroll.ScrollBarThickness = 2
+TabScroll.ScrollBarImageColor3 = CONFIG.ACCENT_COLOR
+TabScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+TabScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+TabScroll.Parent = Sidebar
+
 local TabListLayout = Instance.new("UIListLayout")
 TabListLayout.FillDirection = Enum.FillDirection.Vertical
 TabListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-TabListLayout.Padding = UDim.new(0, 6)
-TabListLayout.Parent = Sidebar
+TabListLayout.Padding = UDim.new(0, 5)
+TabListLayout.Parent = TabScroll
 
-local SidebarPadding = Instance.new("UIPadding")
-SidebarPadding.PaddingTop = UDim.new(0, 10)
-SidebarPadding.PaddingLeft = UDim.new(0, 8)
-SidebarPadding.PaddingRight = UDim.new(0, 8)
-SidebarPadding.Parent = Sidebar
+local TabPadding = Instance.new("UIPadding")
+TabPadding.PaddingTop = UDim.new(0, 8)
+TabPadding.PaddingLeft = UDim.new(0, 8)
+TabPadding.PaddingRight = UDim.new(0, 8)
+TabPadding.Parent = TabScroll
 
--- Content Container
+--[[ Player Profile Box at the Bottom of Sidebar (Image 3 Requirement) ]]--
+local ProfileFrame = Instance.new("Frame")
+ProfileFrame.Name = "ProfileFrame"
+ProfileFrame.Size = UDim2.new(1, -16, 0, 52)
+ProfileFrame.Position = UDim2.new(0, 8, 1, -58)
+ProfileFrame.BackgroundColor3 = CONFIG.CARD_BG
+ProfileFrame.BorderSizePixel = 0
+ProfileFrame.Parent = Sidebar
+ApplyCorner(ProfileFrame, 8)
+ApplyStroke(ProfileFrame, CONFIG.BORDER_COLOR, 1, 0.6)
+
+local AvatarImage = Instance.new("ImageLabel")
+AvatarImage.Name = "AvatarImage"
+AvatarImage.Size = UDim2.new(0, 36, 0, 36)
+AvatarImage.Position = UDim2.new(0, 8, 0.5, -18)
+AvatarImage.BackgroundColor3 = Color3.fromRGB(15, 17, 26)
+AvatarImage.Parent = ProfileFrame
+ApplyCorner(AvatarImage, 18)
+
+task.spawn(function()
+    local content, isReady = Players:GetUserThumbnailAsync(LocalPlayer.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size100x100)
+    if isReady then AvatarImage.Image = content end
+end)
+
+local DisplayNameLabel = Instance.new("TextLabel")
+DisplayNameLabel.Name = "DisplayNameLabel"
+DisplayNameLabel.Size = UDim2.new(1, -54, 0, 18)
+DisplayNameLabel.Position = UDim2.new(0, 50, 0, 8)
+DisplayNameLabel.Text = LocalPlayer.DisplayName
+DisplayNameLabel.TextColor3 = CONFIG.TEXT_COLOR
+DisplayNameLabel.TextSize = 12
+DisplayNameLabel.Font = Enum.Font.GothamBold
+DisplayNameLabel.TextXAlignment = Enum.TextXAlignment.Left
+DisplayNameLabel.TextTruncate = Enum.TextTruncate.AtEnd
+DisplayNameLabel.BackgroundTransparency = 1
+DisplayNameLabel.Parent = ProfileFrame
+
+local UsernameLabel = Instance.new("TextLabel")
+UsernameLabel.Name = "UsernameLabel"
+UsernameLabel.Size = UDim2.new(1, -54, 0, 14)
+UsernameLabel.Position = UDim2.new(0, 50, 0, 26)
+UsernameLabel.Text = "@" .. LocalPlayer.Name
+UsernameLabel.TextColor3 = CONFIG.SUBTEXT_COLOR
+UsernameLabel.TextSize = 10
+UsernameLabel.Font = Enum.Font.Gotham
+UsernameLabel.TextXAlignment = Enum.TextXAlignment.Left
+UsernameLabel.TextTruncate = Enum.TextTruncate.AtEnd
+UsernameLabel.BackgroundTransparency = 1
+UsernameLabel.Parent = ProfileFrame
+
+--[[ Content Area ]]--
 local ContentArea = Instance.new("Frame")
 ContentArea.Name = "ContentArea"
-ContentArea.Size = UDim2.new(1, -160, 1, -45)
-ContentArea.Position = UDim2.new(0, 160, 0, 45)
+ContentArea.Size = UDim2.new(1, -175, 1, -45)
+ContentArea.Position = UDim2.new(0, 175, 0, 45)
 ContentArea.BackgroundTransparency = 1
 ContentArea.ClipsDescendants = true
 ContentArea.Parent = MainContainer
 
--- Mini Mode Floating Button
-local MiniModeButton = Instance.new("ImageButton")
-MiniModeButton.Name = "MM2_MiniToggle"
-MiniModeButton.Size = CONFIG.MINI_MODE_SIZE
-MiniModeButton.Position = UDim2.new(0, 20, 0, 20)
-MiniModeButton.BackgroundColor3 = CONFIG.MINI_BG
-MiniModeButton.Visible = false
-MiniModeButton.ZIndex = 10000
-MiniModeButton.Parent = ScreenGui
-ApplyCorner(MiniModeButton, 24)
-ApplyStroke(MiniModeButton, Color3.fromRGB(255, 255, 255), 2, 0.2)
-CreateShadow(MiniModeButton)
-
-local MiniIcon = Instance.new("ImageLabel")
-MiniIcon.Size = UDim2.new(0, 26, 0, 26)
-MiniIcon.Position = UDim2.new(0.5, -13, 0.5, -13)
-MiniIcon.BackgroundTransparency = 1
-MiniIcon.Image = ICONS.Combat
-MiniIcon.ImageColor3 = Color3.fromRGB(255, 255, 255)
-MiniIcon.Parent = MiniModeButton
-
--- Toggle UI Visibility Logic
-local isUIOpen = true
-local function toggleUI()
-    isUIOpen = not isUIOpen
-    local tweenInfo = TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
-
-    if isUIOpen then
-        MainContainer.Visible = true
-        MainContainer.Size = UDim2.new(0, 0, 0, 0)
-        MainContainer.Position = MiniModeButton.Position
-        
-        TweenService:Create(MainContainer, tweenInfo, {
-            Size = CONFIG.FULL_MODE_SIZE,
-            Position = UDim2.new(0.5, -CONFIG.FULL_MODE_SIZE.X.Offset / 2, 0.5, -CONFIG.FULL_MODE_SIZE.Y.Offset / 2)
-        }):Play()
-
-        TweenService:Create(MiniModeButton, tweenInfo, {Size = UDim2.new(0, 0, 0, 0)}):Play()
-        task.delay(0.35, function() MiniModeButton.Visible = false end)
-    else
-        TweenService:Create(MainContainer, tweenInfo, {
-            Size = UDim2.new(0, 0, 0, 0),
-            Position = MiniModeButton.Position
-        }):Play()
-
-        MiniModeButton.Visible = true
-        MiniModeButton.Size = UDim2.new(0, 0, 0, 0)
-        TweenService:Create(MiniModeButton, tweenInfo, {Size = CONFIG.MINI_MODE_SIZE}):Play()
-        task.delay(0.35, function() MainContainer.Visible = false end)
-    end
-end
-
-MinButton.MouseButton1Click:Connect(toggleUI)
-CloseButton.MouseButton1Click:Connect(function()
-    ScreenGui:Destroy()
-    for _, conn in pairs(Connections) do
-        conn:Disconnect()
-    end
-end)
-MiniModeButton.MouseButton1Click:Connect(toggleUI)
-
--- Dragging System
-local function makeDraggable(frame, handle)
-    local dragging, dragStart, startPos
-    handle.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            dragStart = input.Position
-            startPos = frame.Position
-        end
-    end)
-    handle.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = false
-        end
-    end)
-    UserInputService.InputChanged:Connect(function(input)
-        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-            local delta = input.Position - dragStart
-            frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-        end
-    end)
-end
-
-makeDraggable(MainContainer, Header)
-makeDraggable(MiniModeButton, MiniModeButton)
-
---[[ Tab Management & Component Factories ]]--
+--[[ Tab Creation System ]]--
 local Tabs = {}
 local CurrentTab = nil
 
 local function createTab(name, iconId)
     local tabBtn = Instance.new("TextButton")
     tabBtn.Name = name .. "TabBtn"
-    tabBtn.Size = UDim2.new(1, 0, 0, 38)
+    tabBtn.Size = UDim2.new(1, 0, 0, 36)
     tabBtn.BackgroundColor3 = CONFIG.SIDEBAR_BG
     tabBtn.Text = ""
     tabBtn.AutoButtonColor = false
-    tabBtn.Parent = Sidebar
+    tabBtn.Parent = TabScroll
     ApplyCorner(tabBtn, 8)
 
     local icon = Instance.new("ImageLabel")
     icon.Name = "Icon"
     icon.Size = UDim2.new(0, 18, 0, 18)
-    icon.Position = UDim2.new(0, 12, 0.5, -9)
+    icon.Position = UDim2.new(0, 10, 0.5, -9)
     icon.BackgroundTransparency = 1
     icon.Image = iconId or ICONS.Combat
     icon.ImageColor3 = CONFIG.SUBTEXT_COLOR
@@ -381,8 +410,8 @@ local function createTab(name, iconId)
 
     local label = Instance.new("TextLabel")
     label.Name = "Label"
-    label.Size = UDim2.new(1, -40, 1, 0)
-    label.Position = UDim2.new(0, 38, 0, 0)
+    label.Size = UDim2.new(1, -38, 1, 0)
+    label.Position = UDim2.new(0, 36, 0, 0)
     label.Text = name
     label.TextColor3 = CONFIG.SUBTEXT_COLOR
     label.TextSize = 13
@@ -391,7 +420,6 @@ local function createTab(name, iconId)
     label.BackgroundTransparency = 1
     label.Parent = tabBtn
 
-    -- Auto-fitting Scrolling Frame for Content
     local scrollFrame = Instance.new("ScrollingFrame")
     scrollFrame.Name = name .. "Content"
     scrollFrame.Size = UDim2.new(1, 0, 1, 0)
@@ -420,13 +448,11 @@ local function createTab(name, iconId)
 
     tabBtn.MouseButton1Click:Connect(function()
         if CurrentTab and CurrentTab.Button ~= tabBtn then
-            -- Deactivate current tab
             TweenService:Create(CurrentTab.Button, TweenInfo.new(0.2), {BackgroundColor3 = CONFIG.SIDEBAR_BG}):Play()
             TweenService:Create(CurrentTab.Button.Icon, TweenInfo.new(0.2), {ImageColor3 = CONFIG.SUBTEXT_COLOR}):Play()
             TweenService:Create(CurrentTab.Button.Label, TweenInfo.new(0.2), {TextColor3 = CONFIG.SUBTEXT_COLOR}):Play()
             CurrentTab.Content.Visible = false
 
-            -- Activate new tab
             CurrentTab = {Button = tabBtn, Content = scrollFrame}
             TweenService:Create(tabBtn, TweenInfo.new(0.2), {BackgroundColor3 = CONFIG.CARD_BG}):Play()
             TweenService:Create(icon, TweenInfo.new(0.2), {ImageColor3 = CONFIG.ACCENT_COLOR}):Play()
@@ -448,8 +474,7 @@ local function createTab(name, iconId)
     return scrollFrame
 end
 
---[[ Card Component Factories ]]--
-
+--[[ Component Construction Helpers ]]--
 local function createToggle(parent, title, desc, default, callback)
     local card = Instance.new("Frame")
     card.Size = UDim2.new(1, -6, 0, 48)
@@ -628,58 +653,8 @@ local function createButton(parent, text, callback)
     return card
 end
 
-local function createTextBox(parent, title, placeholder, callback)
-    local card = Instance.new("Frame")
-    card.Size = UDim2.new(1, -6, 0, 52)
-    card.BackgroundColor3 = CONFIG.CARD_BG
-    card.BorderSizePixel = 0
-    card.Parent = parent
-    ApplyCorner(card, 8)
-    ApplyStroke(card, CONFIG.BORDER_COLOR, 1, 0.6)
-
-    local titleLabel = Instance.new("TextLabel")
-    titleLabel.Size = UDim2.new(1, -24, 0, 18)
-    titleLabel.Position = UDim2.new(0, 12, 0, 6)
-    titleLabel.Text = title
-    titleLabel.TextColor3 = CONFIG.TEXT_COLOR
-    titleLabel.TextSize = 12
-    titleLabel.Font = Enum.Font.GothamBold
-    titleLabel.TextXAlignment = Enum.TextXAlignment.Left
-    titleLabel.BackgroundTransparency = 1
-    titleLabel.Parent = card
-
-    local inputContainer = Instance.new("Frame")
-    inputContainer.Size = UDim2.new(1, -24, 0, 22)
-    inputContainer.Position = UDim2.new(0, 12, 0, 24)
-    inputContainer.BackgroundColor3 = Color3.fromRGB(20, 24, 36)
-    inputContainer.Parent = card
-    ApplyCorner(inputContainer, 5)
-
-    local box = Instance.new("TextBox")
-    box.Size = UDim2.new(1, -10, 1, 0)
-    box.Position = UDim2.new(0, 5, 0, 0)
-    box.BackgroundTransparency = 1
-    box.Text = ""
-    box.PlaceholderText = placeholder or "Entrez la valeur..."
-    box.PlaceholderColor3 = CONFIG.SUBTEXT_COLOR
-    box.TextColor3 = CONFIG.TEXT_COLOR
-    box.TextSize = 11
-    box.Font = Enum.Font.Gotham
-    box.TextXAlignment = Enum.TextXAlignment.Left
-    box.ClearTextOnFocus = false
-    box.Parent = inputContainer
-
-    box.FocusLost:Connect(function(enterPressed)
-        task.spawn(callback, box.Text)
-    end)
-
-    return card
-end
-
---[[ Special Component: Dynamic Auto-Updating Player Dropdown ]]--
 local function createPlayerDropdown(parent, callback)
     local card = Instance.new("Frame")
-    card.Name = "PlayerDropdownCard"
     card.Size = UDim2.new(1, -6, 0, 48)
     card.BackgroundColor3 = CONFIG.CARD_BG
     card.BorderSizePixel = 0
@@ -724,7 +699,6 @@ local function createPlayerDropdown(parent, callback)
     arrow.ImageColor3 = CONFIG.SUBTEXT_COLOR
     arrow.Parent = headerBtn
 
-    -- List container for options
     local optionsFrame = Instance.new("Frame")
     optionsFrame.Size = UDim2.new(1, 0, 0, 0)
     optionsFrame.Position = UDim2.new(0, 0, 1, 4)
@@ -748,7 +722,6 @@ local function createPlayerDropdown(parent, callback)
     listPadding.Parent = optionsFrame
 
     local isOpen = false
-
     local function refreshPlayers()
         for _, child in ipairs(optionsFrame:GetChildren()) do
             if child:IsA("TextButton") then child:Destroy() end
@@ -776,7 +749,6 @@ local function createPlayerDropdown(parent, callback)
                     isOpen = false
                     optionsFrame.Visible = false
                     arrow.Rotation = 0
-                    card.Size = UDim2.new(1, -6, 0, 48)
                     task.spawn(callback, plr)
                 end)
             end
@@ -791,14 +763,9 @@ local function createPlayerDropdown(parent, callback)
         isOpen = not isOpen
         optionsFrame.Visible = isOpen
         arrow.Rotation = isOpen and 180 or 0
-        if isOpen then
-            refreshPlayers()
-        else
-            card.Size = UDim2.new(1, -6, 0, 48)
-        end
+        if isOpen then refreshPlayers() end
     end)
 
-    -- Auto Update on Join / Leave
     Players.PlayerAdded:Connect(function() if isOpen then refreshPlayers() end end)
     Players.PlayerRemoving:Connect(function(plr)
         if State.SelectedTarget == plr.Name then
@@ -811,7 +778,7 @@ local function createPlayerDropdown(parent, callback)
     return card
 end
 
---[[ Build UI Tabs ]]--
+--[[ Build All Tabs ]]--
 local CombatTab  = createTab("Combat", ICONS.Combat)
 local FarmingTab = createTab("Farming", ICONS.Farming)
 local VisualsTab = createTab("Visuals", ICONS.Visuals)
@@ -821,7 +788,7 @@ local WebhookTab = createTab("Webhook", ICONS.Webhook)
 local MiscTab    = createTab("Misc", ICONS.Misc)
 local SettingsTab= createTab("Settings", ICONS.Settings)
 
---[[ MM2 Game Helper Logic ]]--
+--[[ Features & Game Functions ]]--
 local function GetRoles()
     local murderer, sheriff
     for _, plr in ipairs(Players:GetPlayers()) do
@@ -836,7 +803,7 @@ local function GetRoles()
     return murderer, sheriff
 end
 
--- 1. COMBAT TAB
+-- Combat
 createToggle(CombatTab, "Auto Kill All (Murderer)", "Élimine instantanément tous les innocents", false, function(v)
     State.KillAura = v
     if v then
@@ -886,8 +853,8 @@ createToggle(CombatTab, "Auto Grab Dropped Gun", "Ramasse le pistolet tombé au 
     end
 end)
 
--- 2. FARMING TAB
-createToggle(FarmingTab, "Auto Farm Coins", "Ramasse automatiquement toutes les pièces de la map", false, function(v)
+-- Farming
+createToggle(FarmingTab, "Auto Farm Coins", "Ramasse automatiquement toutes les pièces", false, function(v)
     State.AutoFarm = v
     if v then
         AddConnection("FarmLoop", RunService.Heartbeat:Connect(function()
@@ -905,57 +872,48 @@ createToggle(FarmingTab, "Auto Farm Coins", "Ramasse automatiquement toutes les 
         end))
     end
 end)
+createSlider(FarmingTab, "Vitesse de Farm", 5, 50, 25, function(v) State.FarmSpeed = v end)
 
-createSlider(FarmingTab, "Vitesse de Farm (Coins/sec)", 5, 50, 25, function(v)
-    State.FarmSpeed = v
-end)
-
--- 3. VISUALS TAB (ESP)
-local HighlightStorage = {}
+-- Visuals
+local Highlights = {}
 createToggle(VisualsTab, "ESP Joueurs (Wallhack Roles)", "Affiche le tueur en rouge et le sheriff en bleu", false, function(v)
     State.ESP_Players = v
     if not v then
-        for _, hl in pairs(HighlightStorage) do hl:Destroy() end
-        HighlightStorage = {}
+        for _, hl in pairs(Highlights) do hl:Destroy() end
+        Highlights = {}
     else
         AddConnection("ESPLoop", RunService.Heartbeat:Connect(function()
             if not State.ESP_Players then return end
             local murderer, sheriff = GetRoles()
             for _, p in ipairs(Players:GetPlayers()) do
                 if p ~= LocalPlayer and p.Character then
-                    local hl = HighlightStorage[p] or Instance.new("Highlight")
+                    local hl = Highlights[p] or Instance.new("Highlight")
                     hl.Adornee = p.Character
                     hl.Parent = ScreenGui
-                    if p == murderer then
-                        hl.FillColor = Color3.fromRGB(255, 40, 40)
-                    elseif p == sheriff then
-                        hl.FillColor = Color3.fromRGB(0, 140, 255)
-                    else
-                        hl.FillColor = Color3.fromRGB(40, 255, 120)
-                    end
-                    HighlightStorage[p] = hl
+                    if p == murderer then hl.FillColor = Color3.fromRGB(255, 40, 40)
+                    elseif p == sheriff then hl.FillColor = Color3.fromRGB(0, 140, 255)
+                    else hl.FillColor = Color3.fromRGB(40, 255, 120) end
+                    Highlights[p] = hl
                 end
             end
         end))
     end
 end)
 
--- 4. JOUEUR TAB
-createSlider(JoueurTab, "Vitesse de Déplacement (WalkSpeed)", 16, 120, 16, function(v)
+-- Joueur
+createSlider(JoueurTab, "Vitesse (WalkSpeed)", 16, 120, 16, function(v)
     State.WalkSpeed = v
     if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
         LocalPlayer.Character.Humanoid.WalkSpeed = v
     end
 end)
-
-createSlider(JoueurTab, "Hauteur de Saut (JumpPower)", 50, 200, 50, function(v)
+createSlider(JoueurTab, "Hauteur Saut (JumpPower)", 50, 200, 50, function(v)
     State.JumpPower = v
     if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
         LocalPlayer.Character.Humanoid.JumpPower = v
     end
 end)
-
-createToggle(JoueurTab, "Infinite Jump", "Sautez indéfiniment dans les airs", false, function(v)
+createToggle(JoueurTab, "Infinite Jump", "Sautez indéfiniment", false, function(v)
     State.InfiniteJump = v
     if v then
         AddConnection("InfJump", UserInputService.JumpRequest:Connect(function()
@@ -965,40 +923,35 @@ createToggle(JoueurTab, "Infinite Jump", "Sautez indéfiniment dans les airs", f
         end))
     end
 end)
-
-createToggle(JoueurTab, "Noclip (Traverser les murs)", "Passe à travers toutes les parois du jeu", false, function(v)
+createToggle(JoueurTab, "Noclip", "Traverser les murs", false, function(v)
     State.Noclip = v
     if v then
         AddConnection("NoclipLoop", RunService.Stepped:Connect(function()
             if State.Noclip and LocalPlayer.Character then
-                for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
-                    if part:IsA("BasePart") then part.CanCollide = false end
+                for _, p in ipairs(LocalPlayer.Character:GetDescendants()) do
+                    if p:IsA("BasePart") then p.CanCollide = false end
                 end
             end
         end))
     end
 end)
 
--- 5. TARGET TAB (Dynamic Volet Roulant + Target Actions)
-createPlayerDropdown(TargetTab, function(plr)
-    print("Cible sélectionnée :", plr.Name)
-end)
-
+-- Target
+createPlayerDropdown(TargetTab, function(plr) print("Selected target:", plr.Name) end)
 createButton(TargetTab, "Téléporter sur la Cible", function()
     if State.SelectedTarget ~= "" then
-        local targetPlr = Players:FindFirstChild(State.SelectedTarget)
-        if targetPlr and targetPlr.Character and targetPlr.Character:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character then
-            LocalPlayer.Character.HumanoidRootPart.CFrame = targetPlr.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)
+        local p = Players:FindFirstChild(State.SelectedTarget)
+        if p and p.Character and p.Character:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character then
+            LocalPlayer.Character.HumanoidRootPart.CFrame = p.Character.HumanoidRootPart.CFrame * CFrame.new(0,0,3)
         end
     end
 end)
-
-createToggle(TargetTab, "Spectate la Cible", "Observe le joueur sélectionné en direct", false, function(v)
+createToggle(TargetTab, "Spectate Cible", "Observer la cible", false, function(v)
     State.Spectating = v
     if v and State.SelectedTarget ~= "" then
-        local targetPlr = Players:FindFirstChild(State.SelectedTarget)
-        if targetPlr and targetPlr.Character and targetPlr.Character:FindFirstChild("Humanoid") then
-            Workspace.CurrentCamera.CameraSubject = targetPlr.Character.Humanoid
+        local p = Players:FindFirstChild(State.SelectedTarget)
+        if p and p.Character and p.Character:FindFirstChild("Humanoid") then
+            Workspace.CurrentCamera.CameraSubject = p.Character.Humanoid
         end
     else
         if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
@@ -1006,16 +959,15 @@ createToggle(TargetTab, "Spectate la Cible", "Observe le joueur sélectionné en
         end
     end
 end)
-
-createButton(TargetTab, "Fling Target (Propulser la cible)", function()
+createButton(TargetTab, "Fling Target (Expulser)", function()
     if State.SelectedTarget ~= "" then
-        local targetPlr = Players:FindFirstChild(State.SelectedTarget)
-        if targetPlr and targetPlr.Character and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        local p = Players:FindFirstChild(State.SelectedTarget)
+        if p and p.Character and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
             local hrp = LocalPlayer.Character.HumanoidRootPart
             local oldPos = hrp.CFrame
-            for i = 1, 30 do
-                if targetPlr.Character and targetPlr.Character:FindFirstChild("HumanoidRootPart") then
-                    hrp.CFrame = targetPlr.Character.HumanoidRootPart.CFrame
+            for i = 1, 25 do
+                if p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                    hrp.CFrame = p.Character.HumanoidRootPart.CFrame
                     hrp.Velocity = Vector3.new(9999, 9999, 9999)
                     task.wait(0.02)
                 end
@@ -1026,62 +978,28 @@ createButton(TargetTab, "Fling Target (Propulser la cible)", function()
     end
 end)
 
--- 6. WEBHOOK TAB
-createTextBox(WebhookTab, "URL Discord Webhook", "https://discord.com/api/webhooks/...", function(url)
-    State.WebhookURL = url
-end)
-
-createButton(WebhookTab, "Envoyer un Log de Test", function()
-    if State.WebhookURL ~= "" then
-        local req = (syn and syn.request) or (http and http.request) or request or HttpService.RequestAsync
-        if req then
-            req({
-                Url = State.WebhookURL,
-                Method = "POST",
-                Headers = {["Content-Type"] = "application/json"},
-                Body = HttpService:JSONEncode({
-                    content = "🔥 **MM2 Rebel Edition Log**\nJoueur: " .. LocalPlayer.Name .. "\nStatut: UI Opérationnelle !"
-                })
-            })
-        end
-    end
-end)
-
--- 7. MISC & GIVE WEAPONS TAB
+-- Misc
 createButton(MiscTab, "Equipper Toutes les Armes", function()
     if LocalPlayer:FindFirstChild("Backpack") and LocalPlayer.Character then
         for _, item in ipairs(LocalPlayer.Backpack:GetChildren()) do
-            if item:IsA("Tool") then
-                item.Parent = LocalPlayer.Character
-            end
+            if item:IsA("Tool") then item.Parent = LocalPlayer.Character end
         end
     end
 end)
-
-createButton(MiscTab, "Faire Tomber l'Arme / Drop Weapon", function()
+createButton(MiscTab, "Jeter l'Arme Tenue (Drop Weapon)", function()
     if LocalPlayer.Character then
         local tool = LocalPlayer.Character:FindFirstChildOfClass("Tool")
         if tool then tool.Parent = Workspace end
     end
 end)
 
-createButton(MiscTab, "Rejoindre un autre serveur (Server Hop)", function()
-    local TeleportService = game:GetService("TeleportService")
-    TeleportService:Teleport(game.PlaceId, LocalPlayer)
-end)
-
--- 8. SETTINGS TAB
-createButton(SettingsTab, "Réinitialiser les Réglages UI", function()
+-- Settings
+createButton(SettingsTab, "Réinitialiser Position UI", function()
     MainContainer.Position = UDim2.new(0.5, -CONFIG.FULL_MODE_SIZE.X.Offset / 2, 0.5, -CONFIG.FULL_MODE_SIZE.Y.Offset / 2)
 end)
-
-createButton(SettingsTab, "Fermer & Décharger le Script", function()
+createButton(SettingsTab, "Fermer & Décharger", function()
     ScreenGui:Destroy()
-    for _, conn in pairs(Connections) do
-        conn:Disconnect()
-    end
+    for _, conn in pairs(Connections) do conn:Disconnect() end
 end)
 
-print("=========================================")
-print("MM2 REBEL EDITION V2 LOADED SUCCESSFULLY!")
-print("=========================================")
+print("MM2 REBEL EDITION V3 LOADED SUCCESSFULLY!")
