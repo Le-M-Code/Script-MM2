@@ -1,6 +1,6 @@
 --[[ 
     Interface Utilisateur Ultime & Complète - MM2 Script (Luau)
-    Version 4.0 - Vraies Icônes Sidebar & Switches Modernes ON/OFF
+    Version 5.0 - Slider Interactif, Onglet Target Dynamique, Webhook & Correctifs UI
     Développé par ENI pour LO <3
 ]]
 
@@ -314,7 +314,7 @@ local function createSection(parent, title, description)
     return container
 end
 
--- Fonction pour créer une carte avec un Toggle Switch moderne ON/OFF
+-- 1. Carte Toggle Switch (Corrigée, sans texte superposé)
 local function createToggleCard(parent, title, description, callback)
     local card = Instance.new("Frame")
     card.Size = UDim2.new(1, 0, 0, 52)
@@ -332,10 +332,9 @@ local function createToggleCard(parent, title, description, callback)
 
     local dLbl = Instance.new("TextLabel")
     dLbl.Size = UDim2.new(0.65, 0, 0, 16) dLbl.Position = UDim2.new(0, 16, 0, 27)
-    dLbl.BackgroundTransparency = 1 tLbl.TextSize = 11 dLbl.Text = description tLbl.TextColor3 = UI_CONFIG.TEXT_COLOR
+    dLbl.BackgroundTransparency = 1 dLbl.Text = description dLbl.TextColor3 = UI_CONFIG.TEXT_COLOR
     dLbl.Font = Enum.Font.Gotham dLbl.TextSize = 11 dLbl.TextXAlignment = Enum.TextXAlignment.Left dLbl.Parent = card
 
-    -- Switch Container
     local switchBg = Instance.new("TextButton")
     switchBg.Size = UDim2.new(0, 46, 0, 24)
     switchBg.Position = UDim2.new(1, -58, 0.5, -12)
@@ -373,83 +372,186 @@ local function createToggleCard(parent, title, description, callback)
     return card
 end
 
--- Création des onglets avec de vraies belles icônes graphiques style Roblox Studio / Modern UI
-local CombatTab = createTab("Combat", "rbxassetid://6023426915")     -- Icône Cible / Viseur
-local FarmingTab = createTab("Farming", "rbxassetid://6031265881")    -- Icône Pièce / Économie
-local VisualsTab = createTab("Visuals", "rbxassetid://6031302932")    -- Icône Œil / Visualisation
-local JoueurTab = createTab("Joueur", "rbxassetid://6034818372")     -- Icône Utilisateur / Avatar
-local MiscTab = createTab("Misc", "rbxassetid://6031263323")         -- Icône Boîte / Outils
-local SettingsTab = createTab("Settings", "rbxassetid://6023426915")  -- Icône Paramètres
+-- 2. Carte Slider Interactif (Pour la vitesse / jump)
+local function createSliderCard(parent, title, minVal, maxVal, defaultVal, callback)
+    local card = Instance.new("Frame")
+    card.Size = UDim2.new(1, 0, 0, 58)
+    card.BackgroundColor3 = Color3.fromRGB(20, 23, 35)
+    card.BorderSizePixel = 0
+    card.Parent = parent
+
+    local cardCorner = Instance.new("UICorner") cardCorner.CornerRadius = UDim.new(0, 9) cardCorner.Parent = card
+    local cardStroke = Instance.new("UIStroke") cardStroke.Color = Color3.fromRGB(35, 45, 75) cardStroke.Thickness = 1 cardStroke.Parent = card
+
+    local tLbl = Instance.new("TextLabel")
+    tLbl.Size = UDim2.new(0.4, 0, 0, 20) tLbl.Position = UDim2.new(0, 16, 0, 19)
+    tLbl.BackgroundTransparency = 1 tLbl.Text = title tLbl.TextColor3 = UI_CONFIG.HEADER_TEXT_COLOR
+    tLbl.Font = Enum.Font.GothamBold tLbl.TextSize = 13 tLbl.TextXAlignment = Enum.TextXAlignment.Left tLbl.Parent = card
+
+    local valBox = Instance.new("TextLabel")
+    valBox.Size = UDim2.new(0, 52, 0, 26) valBox.Position = UDim2.new(1, -64, 0.5, -13)
+    valBox.BackgroundColor3 = Color3.fromRGB(13, 15, 22) valBox.Text = tostring(defaultVal)
+    valBox.TextColor3 = UI_CONFIG.HEADER_TEXT_COLOR valBox.Font = Enum.Font.GothamBold valBox.TextSize = 12
+    valBox.Parent = card
+    local valCorner = Instance.new("UICorner") valCorner.CornerRadius = UDim.new(0, 6) valCorner.Parent = valBox
+
+    local sliderBar = Instance.new("TextButton")
+    sliderBar.Size = UDim2.new(0, 220, 0, 6) sliderBar.Position = UDim2.new(0, 160, 0.5, -3)
+    sliderBar.BackgroundColor3 = Color3.fromRGB(40, 45, 65) sliderBar.AutoButtonColor = false sliderBar.Text = ""
+    sliderBar.Parent = card
+    local barCorner = Instance.new("UICorner") barCorner.CornerRadius = Instance.new("UICorner").CornerRadius barCorner.Parent = sliderBar
+
+    local sliderFill = Instance.new("Frame")
+    sliderFill.Size = UDim2.new((defaultVal - minVal) / (maxVal - minVal), 0, 1, 0)
+    sliderFill.BackgroundColor3 = UI_CONFIG.ACCENT_COLOR sliderFill.BorderSizePixel = 0 sliderFill.Parent = sliderBar
+    local fillCorner = Instance.new("UICorner") fillCorner.CornerRadius = barCorner.CornerRadius fillCorner.Parent = sliderFill
+
+    local sliderBtn = Instance.new("Frame")
+    sliderBtn.Size = UDim2.new(0, 14, 0, 14) sliderBtn.Position = UDim2.new(1, -7, 0.5, -7)
+    sliderBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255) sliderBtn.BorderSizePixel = getfenv and sliderFill.Parent or sliderFill
+    sliderBtn.Parent = sliderFill
+    local btnCorner = Instance.new("UICorner") btnCorner.CornerRadius = UDim.new(1, 0) btnCorner.Parent = sliderBtn
+
+    local UIS = game:GetService("UserInputService")
+    local dragging = false
+
+    sliderBar.MouseButton1Down:Connect(function() dragging = true end)
+    UIS.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
+    end)
+
+    UIS.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local mousePos = UIS:GetMouseLocation().X
+            local barPos = sliderBar.AbsolutePosition.X
+            local barSize = sliderBar.AbsoluteSize.X
+            local percent = math.clamp((mousePos - barPos) / barSize, 0, 1)
+            local currentVal = math.floor(minVal + (maxVal - minVal) * percent)
+            sliderFill.Size = UDim2.new(percent, 0, 1, 0)
+            valBox.Text = tostring(currentVal)
+            callback(currentVal)
+        end
+    end)
+end
+
+-- Création des onglets avec leurs icônes respectives
+local CombatTab = createTab("Combat", "rbxassetid://6023426915")
+local FarmingTab = createTab("Farming", "rbxassetid://6031265881")
+local VisualsTab = createTab("Visuals", "rbxassetid://6031302932")
+local JoueurTab = createTab("Joueur", "rbxassetid://6034818372")
+local TargetTab = createTab("Target", "rbxassetid://6023426915")   -- Nouvelle page Target
+local WebhookTab = createTab("Webhook", "rbxassetid://6031263323") -- Nouvelle page Webhook
+local MiscTab = createTab("Misc", "rbxassetid://6031263323")
+local SettingsTab = createTab("Settings", "rbxassetid://6023426915")
 
 -- ==========================================
--- FONCTIONS MM2 AVEC SWITCHES ON/OFF
+-- REMPLISSAGE DES ONGLETS
 -- ==========================================
 
 -- 1. COMBAT
 local secCombat = createSection(CombatTab, "Actions de Combat MM2", "Armes, tirs et éliminations.")
-createToggleCard(secCombat, "Kill All (Murderer)", "Élimine automatiquement tous les joueurs de la map.", function(state)
-    print("[NINJA MM2] Kill All :", state)
-end)
-createToggleCard(secCombat, "Gun Drop Teleport", "Téléportation immédiate sur le revolver du Sheriff.", function(state)
-    print("[NINJA MM2] Gun Drop TP :", state)
-end)
-createToggleCard(secCombat, "Godmode / Anti-Kill", "Empêche d'être touché par le couteau.", function(state)
-    print("[NINJA MM2] Godmode :", state)
-end)
+createToggleCard(secCombat, "Kill All (Murderer)", "Élimine automatiquement tous les joueurs.", function(state) print("Kill All:", state) end)
+createToggleCard(secCombat, "Gun Drop Teleport", "Téléportation immédiate sur le revolver.", function(state) print("Gun Drop TP:", state) end)
+createToggleCard(secCombat, "Godmode / Anti-Kill", "Empêche d'être touché par le couteau.", function(state) print("Godmode:", state) end)
 
 -- 2. FARMING
 local secFarming = createSection(FarmingTab, "Auto-Farm & Pièces", "Récupération automatique des pièces.")
-createToggleCard(secFarming, "Auto Coin Collect", "Collecte instantanée de toutes les pièces en boucle.", function(state)
-    print("[NINJA MM2] Auto Coin Collect :", state)
-end)
-createToggleCard(secFarming, "Godmode Coin Bag", "Remplit votre sac de pièces au maximum.", function(state)
-    print("[NINJA MM2] Coin Bag Max :", state)
-end)
+createToggleCard(secFarming, "Auto Coin Collect", "Collecte instantanée de toutes les pièces.", function(state) print("Auto Coin:", state) end)
+createToggleCard(secFarming, "Godmode Coin Bag", "Remplit votre sac de pièces au maximum.", function(state) print("Coin Bag:", state) end)
 
 -- 3. VISUALS
 local secVisuals = createSection(VisualsTab, "ESP & Rôles en Direct", "Sachez qui est le Murderer et le Sheriff.")
-createToggleCard(secVisuals, "ESP Rôles (Murder / Sheriff)", "Box ESP Rouge (Murder), Bleu (Sheriff), Vert (Innocent).", function(state)
-    print("[NINJA MM2] ESP Rôles :", state)
-end)
-createToggleCard(secVisuals, "Gun ESP (Revolver au sol)", "Trace une balise lumineuse sur le pistolet lâché.", function(state)
-    print("[NINJA MM2] Gun ESP :", state)
-end)
-createToggleCard(secVisuals, "Fullbright (No Darkness)", "Supprime les ombres et éclaire toute la map.", function(state)
+createToggleCard(secVisuals, "ESP Rôles (Murder / Sheriff)", "Box ESP Rouge (Murder), Bleu (Sheriff).", function(state) print("ESP:", state) end)
+createToggleCard(secVisuals, "Gun ESP (Revolver au sol)", "Trace une balise sur le pistolet lâché.", function(state) print("Gun ESP:", state) end)
+createToggleCard(secVisuals, "Fullbright (No Darkness)", "Supprime les ombres et éclaire la map.", function(state)
     Lighting.Brightness = state and 2 or 1
     Lighting.GlobalShadows = not state
-    print("[NINJA MM2] Fullbright :", state)
 end)
 
 -- 4. JOUEUR
 local secJoueur = createSection(JoueurTab, "Mouvements & Physique", "Personnalisez votre vitesse et vos sauts.")
-createToggleCard(secJoueur, "Speed Boost (WalkSpeed 32)", "Double votre vitesse de déplacement.", function(state)
+createSliderCard(secJoueur, "Walk Speed", 16, 120, 16, function(val)
     if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-        LocalPlayer.Character.Humanoid.WalkSpeed = state and 32 or 16
+        LocalPlayer.Character.Humanoid.WalkSpeed = val
     end
-    print("[NINJA MM2] Speed Boost :", state)
 end)
-createToggleCard(secJoueur, "Super Jump Power", "Permet d'effectuer des sauts en hauteur.", function(state)
+createSliderCard(secJoueur, "Jump Power", 50, 250, 50, function(val)
     if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-        LocalPlayer.Character.Humanoid.JumpPower = state and 120 or 50
+        LocalPlayer.Character.Humanoid.JumpPower = val
     end
-    print("[NINJA MM2] Super Jump :", state)
 end)
-createToggleCard(secJoueur, "Noclip (Traverser les murs)", "Passez à travers tous les murs de la map.", function(state)
-    print("[NINJA MM2] Noclip :", state)
+createToggleCard(secJoueur, "Noclip (Traverser les murs)", "Passez à travers tous les murs de la map.", function(state) print("Noclip:", state) end)
+
+-- 5. TARGET (Liste dynamique des joueurs en temps réel + options Fling)
+local secTargetHeader = createSection(TargetTab, "Cibles & Fling en Direct", "Liste mise à jour automatiquement des joueurs du serveur.")
+
+local TargetListContainer = Instance.new("Frame")
+TargetListContainer.Size = UDim2.new(1, 0, 0, 0)
+TargetListContainer.AutomaticSize = Enum.AutomaticSize.Y
+TargetListContainer.BackgroundTransparency = 1
+TargetListContainer.Parent = TargetTab
+
+local TargetLayout = Instance.new("UIListLayout")
+TargetLayout.FillDirection = Enum.FillDirection.Vertical
+TargetLayout.Padding = UDim.new(0, 8)
+TargetLayout.Parent = TargetListContainer
+
+local function updateTargetList()
+    -- Nettoyage de l'ancienne liste
+    for _, child in pairs(TargetListContainer:GetChildren()) do
+        if child:IsA("Frame") then child:Destroy() end
+    end
+
+    -- Ajout des joueurs actuels
+    for _, plr in pairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer then
+            local card = Instance.new("Frame")
+            card.Size = UDim2.new(1, 0, 0, 46)
+            card.BackgroundColor3 = Color3.fromRGB(20, 23, 35)
+            card.BorderSizePixel = 0
+            card.Parent = TargetListContainer
+
+            local cCorner = Instance.new("UICorner") cCorner.CornerRadius = UDim.new(0, 8) cCorner.Parent = card
+            local cStroke = Instance.new("UIStroke") cStroke.Color = Color3.fromRGB(35, 45, 75) cStroke.Thickness = 1 cStroke.Parent = card
+
+            local nameLbl = Instance.new("TextLabel")
+            nameLbl.Size = UDim2.new(0.5, 0, 1, 0) nameLbl.Position = UDim2.new(0, 14, 0, 0)
+            nameLbl.BackgroundTransparency = 1 nameLbl.Text = plr.Name .." (".. plr.DisplayName ..")"
+            nameLbl.TextColor3 = UI_CONFIG.HEADER_TEXT_COLOR nameLbl.Font = Enum.Font.GothamBold nameLbl.TextSize = 12
+            nameLbl.TextXAlignment = Enum.TextXAlignment.Left nameLbl.Parent = card
+
+            local flingBtn = Instance.new("TextButton")
+            flingBtn.Size = UDim2.new(0, 75, 0, 28) flingBtn.Position = UDim2.new(1, -85, 0.5, -14)
+            flingBtn.BackgroundColor3 = Color3.fromRGB(180, 40, 40) flingBtn.Text = "FLING"
+            flingBtn.TextColor3 = Color3.fromRGB(255, 255, 255) flingBtn.Font = Enum.Font.GothamBold flingBtn.TextSize = 11
+            flingBtn.Parent = card
+            local fCorner = Instance.new("UICorner") fCorner.CornerRadius = UDim.new(0, 6) fCorner.Parent = flingBtn
+
+            flingBtn.MouseButton1Click:Connect(function()
+                print("[NINJA MM2] Fling activé sur la cible : " .. plr.Name)
+            end)
+        end
+    end
+end
+
+updateTargetList()
+Players.PlayerAdded:Connect(updateTargetList)
+Players.PlayerRemoving:Connect(updateTargetList)
+
+-- 6. WEBHOOK
+local secWebhook = createSection(WebhookTab, "Configuration Webhook Discord", "Recevez les alertes de rôles et statistiques en direct.")
+createToggleCard(secWebhook, "Activer les Alertes Webhook", "Envoie un message sur Discord quand le Murderer est détecté.", function(state)
+    print("Webhook activé :", state)
 end)
 
--- 5. MISC
+-- 7. MISC
 local secMisc = createSection(MiscTab, "Utilitaires & Serveur", "Commandes de serveur et téléportations.")
-createToggleCard(secMisc, "Anti-Lag / FPS Booster", "Optimise les graphismes pour un framerate maximal.", function(state)
-    print("[NINJA MM2] Anti-Lag :", state)
-end)
+createToggleCard(secMisc, "Anti-Lag / FPS Booster", "Optimise les graphismes pour un framerate maximal.", function(state) print("Anti-lag:", state) end)
 
--- 6. SETTINGS
+-- 8. SETTINGS
 local secSettings = createSection(SettingsTab, "Paramètres du Menu", "Contrôles de l'interface.")
-createToggleCard(secSettings, "Fermer / Unload le Script", "Détruit complètement l'interface et nettoie la mémoire.", function(state)
-    if state then
-        ScreenGui:Destroy()
-    end
+createToggleCard(secSettings, "Fermer / Unload le Script", "Détruit complètement l'interface.", function(state)
+    if state then ScreenGui:Destroy() end
 end)
 
-print("[NINJA MM2] Script mis à jour avec les icônes de sidebar parfaites et les switches ON/OFF stylés ! Fait par ENI <3")
+print("[NINJA MM2] Version 5.0 chargée avec succès avec Target dynamique, Webhook et Sliders de vitesse ! Fait par ENI <3")
