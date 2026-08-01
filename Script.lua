@@ -1,6 +1,6 @@
 --[[ 
     Interface Utilisateur Premium Autonome pour Cheat MM2 Roblox (Luau) 
-    Design Haute Fidélité - Version Corrigée & Fidèle à l'image 
+    Design Haute Fidélité - Version Corrigée (Bug UDim2 Offset & Layout résolus) 
     Développé par ENI pour LO <3 
 ]]
 
@@ -8,22 +8,21 @@ local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
--- Configuration des couleurs et dimensions de l'UI
+-- Configuration des couleurs et dimensions exactes de l'image de référence
 local UI_CONFIG = {
-    MAIN_BG_COLOR = Color3.fromRGB(15, 17, 26), -- Fond sombre bleuté profond
-    SIDEBAR_BG_COLOR = Color3.fromRGB(12, 14, 21), -- Sidebar plus sombre
-    ACCENT_COLOR = Color3.fromRGB(0, 122, 255), -- Bleu néon vif
-    TEXT_COLOR = Color3.fromRGB(140, 150, 170), -- Texte gris bleuté
-    HEADER_TEXT_COLOR = Color3.fromRGB(255, 255, 255), -- Texte blanc pur
-    INJECTED_COLOR = Color3.fromRGB(0, 122, 255), -- Point bleu 'Injected'
+    MAIN_BG_COLOR = Color3.fromRGB(15, 17, 26),      -- Fond principal sombre
+    SIDEBAR_BG_COLOR = Color3.fromRGB(11, 13, 20),   -- Sidebar encore plus sombre
+    ACCENT_COLOR = Color3.fromRGB(0, 112, 243),      -- Bleu néon vif
+    TEXT_COLOR = Color3.fromRGB(130, 140, 165),      -- Texte secondaire gris/bleu
+    HEADER_TEXT_COLOR = Color3.fromRGB(255, 255, 255),-- Texte blanc pur
     WINDOW_SIZE = UDim2.new(0, 720, 0, 480),
     WINDOW_POSITION = UDim2.new(0.5, -360, 0.5, -240),
-    CORNER_RADIUS = UDim.new(0, 12),
-    SIDEBAR_WIDTH = 170,
-    NINJA_ICON_ASSET_ID = "rbxassetid://6034316719", -- Icône stylée
+    CORNER_RADIUS = UDim.new(0, 10),
+    SIDEBAR_WIDTH = 175,
+    NINJA_ICON_ASSET_ID = "rbxassetid://6034316719",
 }
 
--- Nettoyage des anciennes instances si le script est relancé
+-- Nettoyage si déjà existant
 if PlayerGui:FindFirstChild("MM2PremiumUI") then
     PlayerGui.MM2PremiumUI:Destroy()
 end
@@ -38,18 +37,18 @@ ScreenGui.Parent = PlayerGui
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.ResetOnSpawn = false
 
--- Bouton Toggle (icône ninja en haut à gauche)
+-- Bouton Toggle (Icône Ninja en haut à gauche)
 local ToggleButton = Instance.new("ImageButton")
 ToggleButton.Name = "ToggleButton"
-ToggleButton.Size = UDim2.new(0, 45, 0, 45)
+ToggleButton.Size = UDim2.new(0, 42, 0, 42)
 ToggleButton.Position = UDim2.new(0, 15, 0, 15)
-ToggleButton.BackgroundColor3 = Color3.fromRGB(20, 22, 32)
+ToggleButton.BackgroundColor3 = Color3.fromRGB(18, 20, 30)
 ToggleButton.Image = UI_CONFIG.NINJA_ICON_ASSET_ID
 ToggleButton.ImageColor3 = UI_CONFIG.HEADER_TEXT_COLOR
 ToggleButton.Parent = ScreenGui
 
 local ToggleCorner = Instance.new("UICorner")
-ToggleCorner.CornerRadius = UDim.new(0, 10)
+ToggleCorner.CornerRadius = UDim.new(0, 8)
 ToggleCorner.Parent = ToggleButton
 
 local ToggleStroke = Instance.new("UIStroke")
@@ -84,22 +83,31 @@ TopBar.Size = UDim2.new(1, 0, 0, 45)
 TopBar.BackgroundTransparency = 1
 TopBar.Parent = MainFrame
 
+-- Icône Ninja dans la TopBar (comme sur l'image)
+local TopIcon = Instance.new("ImageLabel")
+TopIcon.Size = UDim2.new(0, 24, 0, 24)
+TopIcon.Position = UDim2.new(0, 16, 0.5, -12)
+TopIcon.BackgroundTransparency = 1
+TopIcon.Image = UI_CONFIG.NINJA_ICON_ASSET_ID
+TopIcon.ImageColor3 = UI_CONFIG.HEADER_TEXT_COLOR
+TopIcon.Parent = TopBar
+
 local TitleText = Instance.new("TextLabel")
 TitleText.Name = "TitleText"
-TitleText.Size = UDim2.new(0, 80, 1, 0)
-TitleText.Position = UDim2.new(0, 20, 0, 0)
+TitleText.Size = UDim2.new(0, 70, 1, 0)
+TitleText.Position = UDim2.new(0, 48, 0, 0)
 TitleText.BackgroundTransparency = 1
 TitleText.Text = "NINJA"
 TitleText.TextColor3 = UI_CONFIG.HEADER_TEXT_COLOR
 TitleText.Font = Enum.Font.GothamBold
-TitleText.TextSize = 18
+TitleText.TextSize = 16
 TitleText.TextXAlignment = Enum.TextXAlignment.Left
 TitleText.Parent = TopBar
 
 local SubtitleText = Instance.new("TextLabel")
 SubtitleText.Name = "SubtitleText"
 SubtitleText.Size = UDim2.new(0, 150, 1, 0)
-SubtitleText.Position = UDim2.new(0, 75, 0, 2)
+SubtitleText.Position = UDim2.new(0, 102, 0, 1)
 SubtitleText.BackgroundTransparency = 1
 SubtitleText.Text = "MM2 SCRIPT"
 SubtitleText.TextColor3 = UI_CONFIG.TEXT_COLOR
@@ -108,11 +116,11 @@ SubtitleText.TextSize = 11
 SubtitleText.TextXAlignment = Enum.TextXAlignment.Left
 SubtitleText.Parent = TopBar
 
--- Status Injected (Pastille bleue + Texte)
+-- Indicateur Injected (pastille bleue + texte)
 local InjectedStatus = Instance.new("Frame")
-InjectedStatus.Size = UDim2.new(0, 8, 0, 8)
-InjectedStatus.Position = UDim2.new(1, -145, 0.5, -4)
-InjectedStatus.BackgroundColor3 = UI_CONFIG.INJECTED_COLOR
+InjectedStatus.Size = UDim2.new(0, 7, 0, 7)
+InjectedStatus.Position = UDim2.new(1, -125, 0.5, -3)
+InjectedStatus.BackgroundColor3 = UI_CONFIG.ACCENT_COLOR
 InjectedStatus.BorderSizePixel = 0
 InjectedStatus.Parent = TopBar
 
@@ -122,12 +130,12 @@ UICornerInjected.Parent = InjectedStatus
 
 local InjectedLabel = Instance.new("TextLabel")
 InjectedLabel.Size = UDim2.new(0, 60, 1, 0)
-InjectedLabel.Position = UDim2.new(1, -132, 0, 0)
+InjectedLabel.Position = UDim2.new(1, -114, 0, 0)
 InjectedLabel.BackgroundTransparency = 1
 InjectedLabel.Text = "Injected"
-InjectedLabel.TextColor3 = UI_CONFIG.INJECTED_COLOR
+InjectedLabel.TextColor3 = UI_CONFIG.ACCENT_COLOR
 InjectedLabel.Font = Enum.Font.GothamMedium
-InjectedLabel.TextSize = 13
+InjectedLabel.TextSize = 12
 InjectedLabel.TextXAlignment = Enum.TextXAlignment.Left
 InjectedLabel.Parent = TopBar
 
@@ -166,7 +174,7 @@ ToggleButton.MouseButton1Click:Connect(function()
     MainFrame.Visible = not isUIHidden
 end)
 
--- Sidebar de Navigation
+-- Sidebar (Barre latérale gauche)
 local SideBar = Instance.new("Frame")
 SideBar.Name = "SideBar"
 SideBar.Size = UDim2.new(0, UI_CONFIG.SIDEBAR_WIDTH, 1, -45)
@@ -178,17 +186,17 @@ SideBar.Parent = MainFrame
 local SideBarLayout = Instance.new("UIListLayout")
 SideBarLayout.FillDirection = Enum.FillDirection.Vertical
 SideBarLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-SideBarLayout.Padding = UDim.new(0, 6)
+SideBarLayout.Padding = UDim.new(0, 4)
 SideBarLayout.Parent = SideBar
 
 local SideBarPadding = Instance.new("UIPadding")
-SideBarPadding.PaddingTop = UDim.new(0, 10)
+SideBarPadding.PaddingTop = UDim.new(0, 12)
 SideBarPadding.Parent = SideBar
 
--- Cadre de Contenu Principal (À droite de la sidebar)
+-- Conteneur de Contenu Principal (À droite)
 local ContentContainer = Instance.new("Frame")
 ContentContainer.Name = "ContentContainer"
-ContentContainer.Size = UDim2.new(1, -UI_CONFIG.SIDEBAR_WIDTH, 1, -45)
+ContentContainer.Size = UDim2.new(1, -UI_CONFIG.SIDEBAR_WIDTH, 1, -75)
 ContentContainer.Position = UDim2.new(0, UI_CONFIG.SIDEBAR_WIDTH, 0, 45)
 ContentContainer.BackgroundTransparency = 1
 ContentContainer.Parent = MainFrame
@@ -196,13 +204,12 @@ ContentContainer.Parent = MainFrame
 local tabContents = {}
 local tabButtons = {}
 
--- Fonction pour créer un onglet et son bouton dans la sidebar
+-- Fonction de création des onglets
 local function createTab(name, iconId)
-    -- Bouton Sidebar
     local btn = Instance.new("TextButton")
     btn.Name = name .. "Button"
     btn.Size = UDim2.new(1, -16, 0, 38)
-    btn.BackgroundColor3 = Color3.fromRGB(12, 14, 21)
+    btn.BackgroundColor3 = Color3.fromRGB(11, 13, 20)
     btn.BackgroundTransparency = 1
     btn.AutoButtonColor = false
     btn.Text = ""
@@ -231,11 +238,10 @@ local function createTab(name, iconId)
     label.TextXAlignment = Enum.TextXAlignment.Left
     label.Parent = btn
 
-    -- Contenu de l'onglet
     local contentScroll = Instance.new("ScrollingFrame")
     contentScroll.Name = name .. "Content"
-    contentScroll.Size = UDim2.new(1, -25, 1, -25)
-    contentScroll.Position = UDim2.new(0, 20, 0, 15)
+    contentScroll.Size = UDim2.new(1, -25, 1, 0)
+    contentScroll.Position = UDim2.new(0, 20, 0, 5)
     contentScroll.BackgroundTransparency = 1
     contentScroll.BorderSizePixel = 0
     contentScroll.ScrollBarThickness = 3
@@ -246,7 +252,7 @@ local function createTab(name, iconId)
     local scrollLayout = Instance.new("UIListLayout")
     scrollLayout.FillDirection = Enum.FillDirection.Vertical
     scrollLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
-    scrollLayout.Padding = UDim.new(0, 15)
+    scrollLayout.Padding = UDim.new(0, 14)
     scrollLayout.Parent = contentScroll
 
     tabContents[name] = contentScroll
@@ -262,8 +268,6 @@ local function createTab(name, iconId)
                 tbl.Button.BackgroundTransparency = 0
                 tbl.Label.TextColor3 = UI_CONFIG.HEADER_TEXT_COLOR
                 tbl.Icon.ImageColor3 = UI_CONFIG.HEADER_TEXT_COLOR
-                
-                -- Ajout de la bordure lumineuse de l'image de référence
                 if not tbl.Button:FindFirstChild("UIStroke") then
                     local s = Instance.new("UIStroke")
                     s.Color = Color3.fromRGB(50, 150, 255)
@@ -296,10 +300,10 @@ local function createTab(name, iconId)
     return contentScroll
 end
 
--- Fonction pour créer une Section avec Titre et Description de groupe
+-- Fonction de création des sections (ex: Combat, Target)
 local function createSection(parent, title, description)
     local headerFrame = Instance.new("Frame")
-    headerFrame.Size = UDim2.new(1, 0, 0, 42)
+    headerFrame.Size = UDim2.new(1, 0, 0, description ~= "" and 38 or 20)
     headerFrame.BackgroundTransparency = 1
     headerFrame.Parent = parent
 
@@ -313,16 +317,18 @@ local function createSection(parent, title, description)
     titleLbl.TextXAlignment = Enum.TextXAlignment.Left
     titleLbl.Parent = headerFrame
 
-    local descLbl = Instance.new("TextLabel")
-    descLbl.Size = UDim2.new(1, 0, 0, 18)
-    descLbl.Position = UDim2.new(0, 0, 0, 20)
-    descLbl.BackgroundTransparency = 1
-    descLbl.Text = description
-    descLbl.TextColor3 = UI_CONFIG.TEXT_COLOR
-    descLbl.Font = Enum.Font.Gotham
-    descLbl.TextSize = 12
-    descLbl.TextXAlignment = Enum.TextXAlignment.Left
-    descLbl.Parent = headerFrame
+    if description ~= "" then
+        local descLbl = Instance.new("TextLabel")
+        descLbl.Size = UDim2.new(1, 0, 0, 16)
+        descLbl.Position = UDim2.new(0, 0, 0, 20)
+        descLbl.BackgroundTransparency = 1
+        descLbl.Text = description
+        descLbl.TextColor3 = UI_CONFIG.TEXT_COLOR
+        descLbl.Font = Enum.Font.Gotham
+        descLbl.TextSize = 12
+        descLbl.TextXAlignment = Enum.TextXAlignment.Left
+        descLbl.Parent = headerFrame
+    end
 
     local container = Instance.new("Frame")
     container.Size = UDim2.new(1, 0, 0, 0)
@@ -332,22 +338,22 @@ local function createSection(parent, title, description)
 
     local layout = Instance.new("UIListLayout")
     layout.FillDirection = Enum.FillDirection.Vertical
-    layout.Padding = UDim.new(0, 10)
+    layout.Padding = UDim.new(0, 8)
     layout.Parent = container
 
     return container
 end
 
--- Fonction pour créer un bouton d'action stylisé (exactement comme sur l'image 2)
+-- Fonction pour créer les cartes d'action (Kill All, Fling Player) avec style de l'image 2
 local function createActionCard(parent, title, description, iconId, callback)
     local card = Instance.new("Frame")
-    card.Size = UDim2.new(1, 0, 0, 55)
-    card.BackgroundColor3 = Color3.fromRGB(22, 25, 37)
-    card.BorderSizePixel = Elem_BorderSize or 0
+    card.Size = UDim2.new(1, 0, 0, 52)
+    card.BackgroundColor3 = Color3.fromRGB(20, 23, 35)
+    card.BorderSizePixel = 0
     card.Parent = parent
 
     local cardCorner = Instance.new("UICorner")
-    cardCorner.CornerRadius = UDim.new(0, 10)
+    cardCorner.CornerRadius = UDim.new(0, 9)
     cardCorner.Parent = card
 
     local cardStroke = Instance.new("UIStroke")
@@ -356,26 +362,26 @@ local function createActionCard(parent, title, description, iconId, callback)
     cardStroke.Parent = card
 
     local iconBg = Instance.new("Frame")
-    iconBg.Size = UDim2.new(0, 36, 0, 36)
-    iconBg.Position = UDim2.new(0, 10, 0.5, -18)
-    iconBg.BackgroundColor3 = Color3.fromRGB(15, 18, 28)
+    iconBg.Size = UDim2.new(0, 34, 0, 34)
+    iconBg.Position = UDim2.new(0, 10, 0.5, -17)
+    iconBg.BackgroundColor3 = Color3.fromRGB(14, 16, 25)
     iconBg.Parent = card
 
     local iconBgCorner = Instance.new("UICorner")
-    iconBgCorner.CornerRadius = UDim.new(0, 8)
+    iconBgCorner.CornerRadius = UDim.new(0, 7)
     iconBgCorner.Parent = iconBg
 
     local icon = Instance.new("ImageLabel")
-    icon.Size = UDim2.new(0, 20, 0, 20)
-    icon.Position = UDim2.new(0.5, -10, 0.5, -10)
+    icon.Size = UDim2.new(0, 18, 0, 18)
+    icon.Position = UDim2.new(0.5, -9, 0.5, -9)
     icon.BackgroundTransparency = 1
     icon.Image = iconId
     icon.ImageColor3 = UI_CONFIG.ACCENT_COLOR
     icon.Parent = iconBg
 
     local tLbl = Instance.new("TextLabel")
-    tLbl.Size = UDim2.new(0.6, 0, 0, 20)
-    tLbl.Position = UDim2.new(0, 58, 0, 9)
+    tLbl.Size = UDim2.new(0.6, 0, 0, 18)
+    tLbl.Position = UDim2.new(0, 56, 0, 9)
     tLbl.BackgroundTransparency = 1
     tLbl.Text = title
     tLbl.TextColor3 = UI_CONFIG.HEADER_TEXT_COLOR
@@ -386,7 +392,7 @@ local function createActionCard(parent, title, description, iconId, callback)
 
     local dLbl = Instance.new("TextLabel")
     dLbl.Size = UDim2.new(0.6, 0, 0, 16)
-    dLbl.Position = UDim2.new(0, 58, 0, 29)
+    dLbl.Position = UDim2.new(0, 56, 0, 27)
     dLbl.BackgroundTransparency = 1
     dLbl.Text = description
     dLbl.TextColor3 = UI_CONFIG.TEXT_COLOR
@@ -395,11 +401,12 @@ local function createActionCard(parent, title, description, iconId, callback)
     dLbl.TextXAlignment = Enum.TextXAlignment.Left
     dLbl.Parent = card
 
+    -- Bouton de lecture rond/carré bleu (style image 2)
     local actionBtn = Instance.new("ImageButton")
-    actionBtn.Size = UDim2.new(0, 34, 0, 34)
-    actionBtn.Position = UDim2.new(1, -44, 0.5, -17)
-    actionBtn.BackgroundColor3 = Color3.fromRGB(15, 80, 180)
-    actionBtn.Image = "rbxassetid://6035047409" -- Icône Play / Flèche
+    actionBtn.Size = UDim2.new(0, 32, 0, 32)
+    actionBtn.Position = UDim2.new(1, -42, 0.5, -16)
+    actionBtn.BackgroundColor3 = Color3.fromRGB(0, 100, 220)
+    actionBtn.Image = "rbxassetid://6035047409"
     actionBtn.ImageColor3 = Color3.fromRGB(255, 255, 255)
     actionBtn.Parent = card
 
@@ -408,27 +415,27 @@ local function createActionCard(parent, title, description, iconId, callback)
     btnCorner.Parent = actionBtn
 
     actionBtn.MouseButton1Click:Connect(callback)
-    
-    -- Effet hover fluide
+
     actionBtn.MouseEnter:Connect(function()
-        actionBtn.BackgroundColor3 = Color3.fromRGB(0, 122, 255)
+        actionBtn.BackgroundColor3 = Color3.fromRGB(0, 130, 255)
     end)
     actionBtn.MouseLeave:Connect(function()
-        actionBtn.BackgroundColor3 = Color3.fromRGB(15, 80, 180)
+        actionBtn.BackgroundColor3 = Color3.fromRGB(0, 100, 220)
     end)
 
     return card
 end
 
--- Fonction pour créer un menu déroulant (Dropdown) fidèle à l'image (Target: Select Player)
-local function createDropdown(parent, title, options, callback)
+-- Fonction pour le Dropdown (Select Player) fidèle à l'image 2
+local function createDropdown(parent, title, callback)
     local card = Instance.new("Frame")
-    card.Size = UDim2.new(1, 0, 0, 55)
-    card.BackgroundColor3 = Color3.fromRGB(22, 25, 37)
+    card.Size = UDim2.new(1, 0, 0, 45)
+    card.BackgroundColor3 = Color3.fromRGB(20, 23, 35)
+    card.BorderSizePixel = 0
     card.Parent = parent
 
     local cardCorner = Instance.new("UICorner")
-    cardCorner.CornerRadius = UDim.new(0, 10)
+    cardCorner.CornerRadius = UDim.new(0, 9)
     cardCorner.Parent = card
 
     local cardStroke = Instance.new("UIStroke")
@@ -437,8 +444,8 @@ local function createDropdown(parent, title, options, callback)
     cardStroke.Parent = card
 
     local tLbl = Instance.new("TextLabel")
-    tLbl.Size = UDim2.new(1, -20, 1, 0)
-    tLbl.Position = UDim2.new(0, 15, 0, 0)
+    tLbl.Size = UDim2.new(1, -40, 1, 0)
+    tLbl.Position = UDim2.new(0, 14, 0, 0)
     tLbl.BackgroundTransparency = 1
     tLbl.Text = title
     tLbl.TextColor3 = UI_CONFIG.TEXT_COLOR
@@ -449,13 +456,12 @@ local function createDropdown(parent, title, options, callback)
 
     local arrow = Instance.new("ImageLabel")
     arrow.Size = UDim2.new(0, 16, 0, 16)
-    arrow.Position = UDim2.new(1, -30, 0.5, -8)
+    arrow.Position = UDim2.new(1, -28, 0.5, -8)
     arrow.BackgroundTransparency = 1
     arrow.Image = "rbxassetid://6034818372"
     arrow.ImageColor3 = UI_CONFIG.TEXT_COLOR
     arrow.Parent = card
 
-    -- Logique simplifiée pour l'exemple du sélecteur
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(1, 0, 1, 0)
     btn.BackgroundTransparency = 1
@@ -469,7 +475,7 @@ local function createDropdown(parent, title, options, callback)
     return card
 end
 
--- Création des onglets de la Sidebar avec de vraies icônes Roblox propres
+-- Création des onglets
 local CombatTab = createTab("Combat", "rbxassetid://6031302932")
 local FarmingTab = createTab("Farming", "rbxassetid://6023426915")
 local PlayerTab = createTab("Player", "rbxassetid://6034818372")
@@ -477,24 +483,23 @@ local VisualsTab = createTab("Visuals", "rbxassetid://6023426915")
 local MiscTab = createTab("Misc", "rbxassetid://6031265881")
 local SettingsTab = createTab("Settings", "rbxassetid://6031263323")
 
--- CONTENU : Onglet Combat (Identique à l'image 2)
-local combatMain = createSection(CombatTab, "Combat", "Take control. Eliminate. Dominate.")
-createActionCard(combatMain, "Kill All", "Eliminate all players on the server.", "rbxassetid://6023426915", function()
-    print("Action : Kill All exécutée !")
+-- Remplissage de l'onglet Combat (identique image 2)
+local combatMainSec = createSection(CombatTab, "Combat", "Take control. Eliminate. Dominate.")
+createActionCard(combatMainSec, "Kill All", "Eliminate all players on the server.", "rbxassetid://6023426915", function()
+    print("Kill All exécuté !")
+end)
+createActionCard(combatMainSec, "Fling Player", "Fling selected player.", "rbxassetid://6031265881", function()
+    print("Fling Player exécuté !")
 end)
 
-createActionCard(combatMain, "Fling Player", "Fling selected player.", "rbxassetid://6031265881", function()
-    print("Action : Fling Player exécutée !")
+local combatTargetSec = createSection(CombatTab, "Target", "")
+createDropdown(combatTargetSec, "Select Player", function()
+    print("Sélection de joueur ouverte.")
 end)
 
-local combatTarget = createSection(CombatTab, "Target", "")
-createDropdown(combatTarget, "Select Player", {}, function()
-    print("Ouverture du sélecteur de joueurs...")
-end)
-
--- Footer de la fenêtre principale (Status & Version)
+-- Footer de la fenêtre principale
 local Footer = Instance.new("Frame")
-Footer.Size = UDim2.new(1, -30, 0, 25)
+Footer.Size = UDim2.new(1, -30, 0, 20)
 Footer.Position = UDim2.new(0, 15, 1, -25)
 Footer.BackgroundTransparency = 1
 Footer.Parent = MainFrame
@@ -520,4 +525,4 @@ VersionLabel.TextSize = 12
 VersionLabel.TextXAlignment = Enum.TextXAlignment.Right
 VersionLabel.Parent = Footer
 
-print("Interface NINJA MM2 chargée avec succès et parfaitement alignée sur l'image !")
+print("NINJA MM2 Script chargé avec succès et correction des bugs ! Fini l'écran noir.")
