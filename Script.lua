@@ -1,557 +1,1087 @@
---[[ 
-    Interface Utilisateur Ultime & Complète - MM2 Script (Luau)
-    Version 5.0 - Slider Interactif, Onglet Target Dynamique, Webhook & Correctifs UI
-    Développé par ENI pour LO <3
-]]
+--!strict
+--[[
+    ================================================================
+    MM2 REBEL EDITION - ULTRA BOOSTED & ULTRA CLEAN UI
+    Engineered by ENI & LO
+    ================================================================
+]]--
 
 local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
+local HttpService = game:GetService("HttpService")
 local Workspace = game:GetService("Workspace")
 local Lighting = game:GetService("Lighting")
 
--- Configuration des couleurs et dimensions
-local UI_CONFIG = {
-    MAIN_BG_COLOR = Color3.fromRGB(15, 17, 26),
-    SIDEBAR_BG_COLOR = Color3.fromRGB(11, 13, 20),
-    ACCENT_COLOR = Color3.fromRGB(0, 112, 243),
-    TEXT_COLOR = Color3.fromRGB(130, 140, 165),
-    HEADER_TEXT_COLOR = Color3.fromRGB(255, 255, 255),
-    WINDOW_SIZE = UDim2.new(0, 740, 0, 500),
-    WINDOW_POSITION = UDim2.new(0.5, -370, 0.5, -250),
-    CORNER_RADIUS = UDim.new(0, 10),
-    SIDEBAR_WIDTH = 185,
-    NINJA_ICON_ASSET_ID = "rbxassetid://6034316719",
+local LocalPlayer = Players.LocalPlayer
+local Mouse = LocalPlayer:GetMouse()
+
+--[[ Configuration System ]]--
+local CONFIG = {
+    UI_NAME = "MM2 REBEL V2",
+    MAIN_BG = Color3.fromRGB(15, 17, 26),
+    SIDEBAR_BG = Color3.fromRGB(20, 23, 34),
+    CARD_BG = Color3.fromRGB(28, 32, 47),
+    ACCENT_COLOR = Color3.fromRGB(0, 150, 255),
+    ACCENT_HOVER = Color3.fromRGB(30, 170, 255),
+    TEXT_COLOR = Color3.fromRGB(240, 240, 245),
+    SUBTEXT_COLOR = Color3.fromRGB(140, 145, 165),
+    BORDER_COLOR = Color3.fromRGB(45, 52, 75),
+    CLOSE_RED = Color3.fromRGB(235, 60, 80),
+    MINI_BG = Color3.fromRGB(0, 140, 240),
+    FULL_MODE_SIZE = UDim2.new(0, 680, 0, 440),
+    MINI_MODE_SIZE = UDim2.new(0, 48, 0, 48),
 }
 
--- Nettoyage si déjà existant
-if PlayerGui:FindFirstChild("MM2PremiumUI") then
-    PlayerGui.MM2PremiumUI:Destroy()
+--[[ Clean Modern Icons (Lucide / Standard Clean Assets) ]]--
+local ICONS = {
+    Combat   = "rbxassetid://6034808398",
+    Farming  = "rbxassetid://6034684937",
+    Visuals  = "rbxassetid://6034560416",
+    Joueur   = "rbxassetid://6034287525",
+    Target   = "rbxassetid://6035078735",
+    Webhook  = "rbxassetid://6034344541",
+    Misc     = "rbxassetid://6034954449",
+    Settings = "rbxassetid://6031280882",
+    Chevron  = "rbxassetid://6031091004",
+    Close    = "rbxassetid://6031094678",
+    Minimize = "rbxassetid://6031094667",
+    Search   = "rbxassetid://6031154871",
+}
+
+--[[ Active Hacks & State Storage ]]--
+local State = {
+    AutoFarm = false,
+    FarmSpeed = 25,
+    KillAura = false,
+    AutoShootMurderer = false,
+    AutoGrabGun = false,
+    ESP_Players = false,
+    ESP_Gun = false,
+    ESP_Tracers = false,
+    WalkSpeed = 16,
+    JumpPower = 50,
+    InfiniteJump = false,
+    Noclip = false,
+    Fly = false,
+    SelectedTarget = "",
+    Spectating = false,
+    WebhookURL = "",
+    WebhookEnabled = false,
+}
+
+local Connections = {}
+
+local function AddConnection(name, conn)
+    if Connections[name] then
+        Connections[name]:Disconnect()
+    end
+    Connections[name] = conn
 end
 
-local currentTab = "Combat"
+--[[ Helper UI Constructors ]]--
+local function ApplyCorner(parent, radius)
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, radius or 8)
+    corner.Parent = parent
+    return corner
+end
 
--- ScreenGui principal
+local function ApplyStroke(parent, color, thickness, transparency)
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = color or CONFIG.BORDER_COLOR
+    stroke.Thickness = thickness or 1
+    stroke.Transparency = transparency or 0.5
+    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    stroke.Parent = parent
+    return stroke
+end
+
+local function CreateShadow(parent)
+    -- Sleek dark drop shadow
+    local shadow = Instance.new("ImageLabel")
+    shadow.Name = "Shadow"
+    shadow.AnchorPoint = Vector2.new(0.5, 0.5)
+    shadow.Position = UDim2.new(0.5, 0, 0.5, 4)
+    shadow.Size = UDim2.new(1, 24, 1, 24)
+    shadow.BackgroundTransparency = 1
+    shadow.Image = "rbxassetid://1316045217"
+    shadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
+    shadow.ImageTransparency = 0.4
+    shadow.ScaleType = Enum.ScaleType.Slice
+    shadow.SliceCenter = Rect.new(10, 10, 118, 118)
+    shadow.ZIndex = parent.ZIndex - 1
+    shadow.Parent = parent
+    return shadow
+end
+
+--[[ Main UI Screen ]]--
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+if PlayerGui:FindFirstChild("MM2_Rebel_UI") then
+    PlayerGui.MM2_Rebel_UI:Destroy()
+end
+
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "MM2PremiumUI"
-ScreenGui.Parent = PlayerGui
-ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.Name = "MM2_Rebel_UI"
 ScreenGui.ResetOnSpawn = false
+ScreenGui.DisplayOrder = 9999
+ScreenGui.Parent = PlayerGui
 
--- Bouton Toggle (Flottant)
-local ToggleButton = Instance.new("ImageButton")
-ToggleButton.Name = "ToggleButton"
-ToggleButton.Size = UDim2.new(0, 42, 0, 42)
-ToggleButton.Position = UDim2.new(0, 15, 0, 15)
-ToggleButton.BackgroundColor3 = Color3.fromRGB(18, 20, 30)
-ToggleButton.Image = UI_CONFIG.NINJA_ICON_ASSET_ID
-ToggleButton.ImageColor3 = UI_CONFIG.HEADER_TEXT_COLOR
-ToggleButton.Parent = ScreenGui
+-- Main Container Window
+local MainContainer = Instance.new("Frame")
+MainContainer.Name = "MainContainer"
+MainContainer.Size = CONFIG.FULL_MODE_SIZE
+MainContainer.Position = UDim2.new(0.5, -CONFIG.FULL_MODE_SIZE.X.Offset / 2, 0.5, -CONFIG.FULL_MODE_SIZE.Y.Offset / 2)
+MainContainer.BackgroundColor3 = CONFIG.MAIN_BG
+MainContainer.BorderSizePixel = 0
+MainContainer.ClipsDescendants = true
+MainContainer.Parent = ScreenGui
+ApplyCorner(MainContainer, 12)
+ApplyStroke(MainContainer, CONFIG.BORDER_COLOR, 1.5, 0.3)
+CreateShadow(MainContainer)
 
-local ToggleCorner = Instance.new("UICorner")
-ToggleCorner.CornerRadius = UDim.new(0, 8)
-ToggleCorner.Parent = ToggleButton
+-- Header Bar
+local Header = Instance.new("Frame")
+Header.Name = "Header"
+Header.Size = UDim2.new(1, 0, 0, 44)
+Header.BackgroundColor3 = CONFIG.SIDEBAR_BG
+Header.BorderSizePixel = 0
+Header.Parent = MainContainer
+ApplyCorner(Header, 12)
 
-local ToggleStroke = Instance.new("UIStroke")
-ToggleStroke.Color = UI_CONFIG.ACCENT_COLOR
-ToggleStroke.Thickness = 1.5
-ToggleStroke.Parent = ToggleButton
+-- Cover bottom corners of Header so it blends seamlessly
+local HeaderBottomFix = Instance.new("Frame")
+HeaderBottomFix.Size = UDim2.new(1, 0, 0, 10)
+HeaderBottomFix.Position = UDim2.new(0, 0, 1, -10)
+HeaderBottomFix.BackgroundColor3 = CONFIG.SIDEBAR_BG
+HeaderBottomFix.BorderSizePixel = 0
+HeaderBottomFix.Parent = Header
 
--- Fenêtre Principale
-local MainFrame = Instance.new("Frame")
-MainFrame.Name = "MainFrame"
-MainFrame.Size = UI_CONFIG.WINDOW_SIZE
-MainFrame.Position = UI_CONFIG.WINDOW_POSITION
-MainFrame.BackgroundColor3 = UI_CONFIG.MAIN_BG_COLOR
-MainFrame.BorderSizePixel = 0
-MainFrame.Draggable = true
-MainFrame.Active = true
-MainFrame.Parent = ScreenGui
+local HeaderDivider = Instance.new("Frame")
+HeaderDivider.Size = UDim2.new(1, 0, 0, 1)
+HeaderDivider.Position = UDim2.new(0, 0, 1, 0)
+HeaderDivider.BackgroundColor3 = CONFIG.BORDER_COLOR
+HeaderDivider.BorderSizePixel = 0
+HeaderDivider.Parent = Header
 
-local UICornerMain = Instance.new("UICorner")
-UICornerMain.CornerRadius = UI_CONFIG.CORNER_RADIUS
-UICornerMain.Parent = MainFrame
+-- Title & Logo
+local LogoIcon = Instance.new("ImageLabel")
+LogoIcon.Size = UDim2.new(0, 22, 0, 22)
+LogoIcon.Position = UDim2.new(0, 14, 0.5, -11)
+LogoIcon.BackgroundTransparency = 1
+LogoIcon.Image = ICONS.Combat
+LogoIcon.ImageColor3 = CONFIG.ACCENT_COLOR
+LogoIcon.Parent = Header
 
-local MainStroke = Instance.new("UIStroke")
-MainStroke.Color = Color3.fromRGB(35, 45, 75)
-MainStroke.Thickness = 1.5
-MainStroke.Parent = MainFrame
+local TitleLabel = Instance.new("TextLabel")
+TitleLabel.Name = "TitleLabel"
+TitleLabel.Size = UDim2.new(0, 200, 1, 0)
+TitleLabel.Position = UDim2.new(0, 44, 0, 0)
+TitleLabel.Text = CONFIG.UI_NAME
+TitleLabel.TextColor3 = CONFIG.TEXT_COLOR
+TitleLabel.TextSize = 16
+TitleLabel.Font = Enum.Font.GothamBold
+TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+TitleLabel.BackgroundTransparency = 1
+TitleLabel.Parent = Header
 
--- TopBar
-local TopBar = Instance.new("Frame")
-TopBar.Name = "TopBar"
-TopBar.Size = UDim2.new(1, 0, 0, 45)
-TopBar.BackgroundTransparency = 1
-TopBar.Parent = MainFrame
+-- Window Controls (Minimize & Close)
+local ControlsFrame = Instance.new("Frame")
+ControlsFrame.Size = UDim2.new(0, 80, 1, 0)
+ControlsFrame.Position = UDim2.new(1, -85, 0, 0)
+ControlsFrame.BackgroundTransparency = 1
+ControlsFrame.Parent = Header
 
-local TopIcon = Instance.new("ImageLabel")
-TopIcon.Size = UDim2.new(0, 24, 0, 24)
-TopIcon.Position = UDim2.new(0, 16, 0.5, -12)
-TopIcon.BackgroundTransparency = 1
-TopIcon.Image = UI_CONFIG.NINJA_ICON_ASSET_ID
-TopIcon.ImageColor3 = UI_CONFIG.HEADER_TEXT_COLOR
-TopIcon.Parent = TopBar
-
-local TitleText = Instance.new("TextLabel")
-TitleText.Size = UDim2.new(0, 70, 1, 0)
-TitleText.Position = UDim2.new(0, 48, 0, 0)
-TitleText.BackgroundTransparency = 1
-TitleText.Text = "NINJA"
-TitleText.TextColor3 = UI_CONFIG.HEADER_TEXT_COLOR
-TitleText.Font = Enum.Font.GothamBold
-TitleText.TextSize = 16
-TitleText.TextXAlignment = Enum.TextXAlignment.Left
-TitleText.Parent = TopBar
-
-local SubtitleText = Instance.new("TextLabel")
-SubtitleText.Size = UDim2.new(0, 150, 1, 0)
-SubtitleText.Position = UDim2.new(0, 102, 0, 1)
-SubtitleText.BackgroundTransparency = 1
-SubtitleText.Text = "MM2 SCRIPT"
-SubtitleText.TextColor3 = UI_CONFIG.TEXT_COLOR
-SubtitleText.Font = Enum.Font.Gotham
-SubtitleText.TextSize = 11
-SubtitleText.TextXAlignment = Enum.TextXAlignment.Left
-SubtitleText.Parent = TopBar
-
--- Indicateur Injected
-local InjectedStatus = Instance.new("Frame")
-InjectedStatus.Size = UDim2.new(0, 7, 0, 7)
-InjectedStatus.Position = UDim2.new(1, -125, 0.5, -3)
-InjectedStatus.BackgroundColor3 = UI_CONFIG.ACCENT_COLOR
-InjectedStatus.BorderSizePixel = 0
-InjectedStatus.Parent = TopBar
-
-local UICornerInjected = Instance.new("UICorner")
-UICornerInjected.CornerRadius = UDim.new(1, 0)
-UICornerInjected.Parent = InjectedStatus
-
-local InjectedLabel = Instance.new("TextLabel")
-InjectedLabel.Size = UDim2.new(0, 60, 1, 0)
-InjectedLabel.Position = UDim2.new(1, -114, 0, 0)
-InjectedLabel.BackgroundTransparency = 1
-InjectedLabel.Text = "Injected"
-InjectedLabel.TextColor3 = UI_CONFIG.ACCENT_COLOR
-InjectedLabel.Font = Enum.Font.GothamMedium
-InjectedLabel.TextSize = 12
-InjectedLabel.TextXAlignment = Enum.TextXAlignment.Left
-InjectedLabel.Parent = TopBar
+local MinButton = Instance.new("TextButton")
+MinButton.Name = "MinButton"
+MinButton.Size = UDim2.new(0, 28, 0, 28)
+MinButton.Position = UDim2.new(0, 8, 0.5, -14)
+MinButton.BackgroundColor3 = Color3.fromRGB(35, 40, 58)
+MinButton.Text = "-"
+MinButton.TextColor3 = CONFIG.TEXT_COLOR
+MinButton.TextSize = 18
+MinButton.Font = Enum.Font.GothamBold
+MinButton.Parent = ControlsFrame
+ApplyCorner(MinButton, 6)
 
 local CloseButton = Instance.new("TextButton")
-CloseButton.Size = UDim2.new(0, 30, 1, 0)
-CloseButton.Position = UDim2.new(1, -35, 0, 0)
-CloseButton.BackgroundTransparency = 1
-CloseButton.Text = "✕"
-CloseButton.TextColor3 = UI_CONFIG.TEXT_COLOR
-CloseButton.Font = Enum.Font.GothamBold
+CloseButton.Name = "CloseButton"
+CloseButton.Size = UDim2.new(0, 28, 0, 28)
+CloseButton.Position = UDim2.new(0, 44, 0.5, -14)
+CloseButton.BackgroundColor3 = Color3.fromRGB(45, 30, 40)
+CloseButton.Text = "X"
+CloseButton.TextColor3 = CONFIG.CLOSE_RED
 CloseButton.TextSize = 14
-CloseButton.Parent = TopBar
+CloseButton.Font = Enum.Font.GothamBold
+CloseButton.Parent = ControlsFrame
+ApplyCorner(CloseButton, 6)
 
-local MinimizeButton = Instance.new("TextButton")
-MinimizeButton.Size = UDim2.new(0, 30, 1, 0)
-MinimizeButton.Position = UDim2.new(1, -65, 0, 0)
-MinimizeButton.BackgroundTransparency = 1
-MinimizeButton.Text = "—"
-MinimizeButton.TextColor3 = UI_CONFIG.TEXT_COLOR
-MinimizeButton.Font = Enum.Font.GothamBold
-MinimizeButton.TextSize = 14
-MinimizeButton.Parent = TopBar
+MinButton.MouseEnter:Connect(function()
+    TweenService:Create(MinButton, TweenInfo.new(0.2), {BackgroundColor3 = CONFIG.ACCENT_COLOR, TextColor3 = Color3.new(1,1,1)}):Play()
+end)
+MinButton.MouseLeave:Connect(function()
+    TweenService:Create(MinButton, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(35, 40, 58), TextColor3 = CONFIG.TEXT_COLOR}):Play()
+end)
 
-CloseButton.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
-MinimizeButton.MouseButton1Click:Connect(function() MainFrame.Visible = not MainFrame.Visible end)
-ToggleButton.MouseButton1Click:Connect(function() MainFrame.Visible = not MainFrame.Visible end)
+CloseButton.MouseEnter:Connect(function()
+    TweenService:Create(CloseButton, TweenInfo.new(0.2), {BackgroundColor3 = CONFIG.CLOSE_RED, TextColor3 = Color3.new(1,1,1)}):Play()
+end)
+CloseButton.MouseLeave:Connect(function()
+    TweenService:Create(CloseButton, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(45, 30, 40), TextColor3 = CONFIG.CLOSE_RED}):Play()
+end)
 
--- Sidebar
-local SideBar = Instance.new("Frame")
-SideBar.Size = UDim2.new(0, UI_CONFIG.SIDEBAR_WIDTH, 1, -45)
-SideBar.Position = UDim2.new(0, 0, 0, 45)
-SideBar.BackgroundColor3 = UI_CONFIG.SIDEBAR_BG_COLOR
-SideBar.BorderSizePixel = 0
-SideBar.Parent = MainFrame
+-- Sidebar Layout
+local Sidebar = Instance.new("Frame")
+Sidebar.Name = "Sidebar"
+Sidebar.Size = UDim2.new(0, 160, 1, -45)
+Sidebar.Position = UDim2.new(0, 0, 0, 45)
+Sidebar.BackgroundColor3 = CONFIG.SIDEBAR_BG
+Sidebar.BorderSizePixel = 0
+Sidebar.Parent = MainContainer
 
-local SideBarLayout = Instance.new("UIListLayout")
-SideBarLayout.FillDirection = Enum.FillDirection.Vertical
-SideBarLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-SideBarLayout.Padding = UDim.new(0, 4)
-SideBarLayout.Parent = SideBar
+local SidebarDivider = Instance.new("Frame")
+SidebarDivider.Size = UDim2.new(0, 1, 1, 0)
+SidebarDivider.Position = UDim2.new(1, -1, 0, 0)
+SidebarDivider.BackgroundColor3 = CONFIG.BORDER_COLOR
+SidebarDivider.BorderSizePixel = 0
+SidebarDivider.Parent = Sidebar
 
-local SideBarPadding = Instance.new("UIPadding")
-SideBarPadding.PaddingTop = UDim.new(0, 12)
-SideBarPadding.Parent = SideBar
+local TabListLayout = Instance.new("UIListLayout")
+TabListLayout.FillDirection = Enum.FillDirection.Vertical
+TabListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+TabListLayout.Padding = UDim.new(0, 6)
+TabListLayout.Parent = Sidebar
 
--- Conteneur Principal
-local ContentContainer = Instance.new("Frame")
-ContentContainer.Size = UDim2.new(1, -UI_CONFIG.SIDEBAR_WIDTH, 1, -75)
-ContentContainer.Position = UDim2.new(0, UI_CONFIG.SIDEBAR_WIDTH, 0, 45)
-ContentContainer.BackgroundTransparency = 1
-ContentContainer.Parent = MainFrame
+local SidebarPadding = Instance.new("UIPadding")
+SidebarPadding.PaddingTop = UDim.new(0, 10)
+SidebarPadding.PaddingLeft = UDim.new(0, 8)
+SidebarPadding.PaddingRight = UDim.new(0, 8)
+SidebarPadding.Parent = Sidebar
 
-local tabContents = {}
-local tabButtons = {}
+-- Content Container
+local ContentArea = Instance.new("Frame")
+ContentArea.Name = "ContentArea"
+ContentArea.Size = UDim2.new(1, -160, 1, -45)
+ContentArea.Position = UDim2.new(0, 160, 0, 45)
+ContentArea.BackgroundTransparency = 1
+ContentArea.ClipsDescendants = true
+ContentArea.Parent = MainContainer
+
+-- Mini Mode Floating Button
+local MiniModeButton = Instance.new("ImageButton")
+MiniModeButton.Name = "MM2_MiniToggle"
+MiniModeButton.Size = CONFIG.MINI_MODE_SIZE
+MiniModeButton.Position = UDim2.new(0, 20, 0, 20)
+MiniModeButton.BackgroundColor3 = CONFIG.MINI_BG
+MiniModeButton.Visible = false
+MiniModeButton.ZIndex = 10000
+MiniModeButton.Parent = ScreenGui
+ApplyCorner(MiniModeButton, 24)
+ApplyStroke(MiniModeButton, Color3.fromRGB(255, 255, 255), 2, 0.2)
+CreateShadow(MiniModeButton)
+
+local MiniIcon = Instance.new("ImageLabel")
+MiniIcon.Size = UDim2.new(0, 26, 0, 26)
+MiniIcon.Position = UDim2.new(0.5, -13, 0.5, -13)
+MiniIcon.BackgroundTransparency = 1
+MiniIcon.Image = ICONS.Combat
+MiniIcon.ImageColor3 = Color3.fromRGB(255, 255, 255)
+MiniIcon.Parent = MiniModeButton
+
+-- Toggle UI Visibility Logic
+local isUIOpen = true
+local function toggleUI()
+    isUIOpen = not isUIOpen
+    local tweenInfo = TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+
+    if isUIOpen then
+        MainContainer.Visible = true
+        MainContainer.Size = UDim2.new(0, 0, 0, 0)
+        MainContainer.Position = MiniModeButton.Position
+        
+        TweenService:Create(MainContainer, tweenInfo, {
+            Size = CONFIG.FULL_MODE_SIZE,
+            Position = UDim2.new(0.5, -CONFIG.FULL_MODE_SIZE.X.Offset / 2, 0.5, -CONFIG.FULL_MODE_SIZE.Y.Offset / 2)
+        }):Play()
+
+        TweenService:Create(MiniModeButton, tweenInfo, {Size = UDim2.new(0, 0, 0, 0)}):Play()
+        task.delay(0.35, function() MiniModeButton.Visible = false end)
+    else
+        TweenService:Create(MainContainer, tweenInfo, {
+            Size = UDim2.new(0, 0, 0, 0),
+            Position = MiniModeButton.Position
+        }):Play()
+
+        MiniModeButton.Visible = true
+        MiniModeButton.Size = UDim2.new(0, 0, 0, 0)
+        TweenService:Create(MiniModeButton, tweenInfo, {Size = CONFIG.MINI_MODE_SIZE}):Play()
+        task.delay(0.35, function() MainContainer.Visible = false end)
+    end
+end
+
+MinButton.MouseButton1Click:Connect(toggleUI)
+CloseButton.MouseButton1Click:Connect(function()
+    ScreenGui:Destroy()
+    for _, conn in pairs(Connections) do
+        conn:Disconnect()
+    end
+end)
+MiniModeButton.MouseButton1Click:Connect(toggleUI)
+
+-- Dragging System
+local function makeDraggable(frame, handle)
+    local dragging, dragStart, startPos
+    handle.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            dragStart = input.Position
+            startPos = frame.Position
+        end
+    end)
+    handle.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local delta = input.Position - dragStart
+            frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+end
+
+makeDraggable(MainContainer, Header)
+makeDraggable(MiniModeButton, MiniModeButton)
+
+--[[ Tab Management & Component Factories ]]--
+local Tabs = {}
+local CurrentTab = nil
 
 local function createTab(name, iconId)
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, -16, 0, 40)
-    btn.BackgroundTransparency = 1
-    btn.AutoButtonColor = false
-    btn.Text = ""
-    btn.Parent = SideBar
-
-    local btnCorner = Instance.new("UICorner")
-    btnCorner.CornerRadius = UDim.new(0, 8)
-    btnCorner.Parent = btn
+    local tabBtn = Instance.new("TextButton")
+    tabBtn.Name = name .. "TabBtn"
+    tabBtn.Size = UDim2.new(1, 0, 0, 38)
+    tabBtn.BackgroundColor3 = CONFIG.SIDEBAR_BG
+    tabBtn.Text = ""
+    tabBtn.AutoButtonColor = false
+    tabBtn.Parent = Sidebar
+    ApplyCorner(tabBtn, 8)
 
     local icon = Instance.new("ImageLabel")
-    icon.Size = UDim2.new(0, 20, 0, 20)
-    icon.Position = UDim2.new(0, 14, 0.5, -10)
+    icon.Name = "Icon"
+    icon.Size = UDim2.new(0, 18, 0, 18)
+    icon.Position = UDim2.new(0, 12, 0.5, -9)
     icon.BackgroundTransparency = 1
-    icon.Image = iconId
-    icon.ImageColor3 = UI_CONFIG.TEXT_COLOR
-    icon.Parent = btn
+    icon.Image = iconId or ICONS.Combat
+    icon.ImageColor3 = CONFIG.SUBTEXT_COLOR
+    icon.Parent = tabBtn
 
     local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(1, -48, 1, 0)
-    label.Position = UDim2.new(0, 44, 0, 0)
-    label.BackgroundTransparency = 1
+    label.Name = "Label"
+    label.Size = UDim2.new(1, -40, 1, 0)
+    label.Position = UDim2.new(0, 38, 0, 0)
     label.Text = name
-    label.TextColor3 = UI_CONFIG.TEXT_COLOR
-    label.Font = Enum.Font.GothamMedium
+    label.TextColor3 = CONFIG.SUBTEXT_COLOR
     label.TextSize = 13
+    label.Font = Enum.Font.GothamMedium
     label.TextXAlignment = Enum.TextXAlignment.Left
-    label.Parent = btn
+    label.BackgroundTransparency = 1
+    label.Parent = tabBtn
 
-    local contentScroll = Instance.new("ScrollingFrame")
-    contentScroll.Size = UDim2.new(1, -25, 1, 0)
-    contentScroll.Position = UDim2.new(0, 20, 0, 5)
-    contentScroll.BackgroundTransparency = 1
-    contentScroll.BorderSizePixel = 0
-    contentScroll.ScrollBarThickness = 3
-    contentScroll.ScrollBarImageColor3 = UI_CONFIG.ACCENT_COLOR
-    contentScroll.Visible = (name == currentTab)
-    contentScroll.Parent = ContentContainer
+    -- Auto-fitting Scrolling Frame for Content
+    local scrollFrame = Instance.new("ScrollingFrame")
+    scrollFrame.Name = name .. "Content"
+    scrollFrame.Size = UDim2.new(1, 0, 1, 0)
+    scrollFrame.BackgroundTransparency = 1
+    scrollFrame.BorderSizePixel = 0
+    scrollFrame.Visible = false
+    scrollFrame.ScrollBarThickness = 4
+    scrollFrame.ScrollBarImageColor3 = CONFIG.ACCENT_COLOR
+    scrollFrame.ScrollBarImageTransparency = 0.2
+    scrollFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+    scrollFrame.VerticalScrollBarInset = Enum.ScrollBarInset.ScrollBar
+    scrollFrame.Parent = ContentArea
 
-    local scrollLayout = Instance.new("UIListLayout")
-    scrollLayout.FillDirection = Enum.FillDirection.Vertical
-    scrollLayout.Padding = UDim.new(0, 14)
-    scrollLayout.Parent = contentScroll
+    local contentLayout = Instance.new("UIListLayout")
+    contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    contentLayout.Padding = UDim.new(0, 8)
+    contentLayout.Parent = scrollFrame
 
-    tabContents[name] = contentScroll
-    tabButtons[name] = {Button = btn, Label = label, Icon = icon}
+    local contentPadding = Instance.new("UIPadding")
+    contentPadding.PaddingTop = UDim.new(0, 12)
+    contentPadding.PaddingBottom = UDim.new(0, 12)
+    contentPadding.PaddingLeft = UDim.new(0, 14)
+    contentPadding.PaddingRight = UDim.new(0, 14)
+    contentPadding.Parent = scrollFrame
 
-    btn.MouseButton1Click:Connect(function()
-        for tabName, content in pairs(tabContents) do content.Visible = (tabName == name) end
-        for tabName, tbl in pairs(tabButtons) do
-            if tabName == name then
-                tbl.Button.BackgroundColor3 = UI_CONFIG.ACCENT_COLOR
-                tbl.Button.BackgroundTransparency = 0
-                tbl.Label.TextColor3 = UI_CONFIG.HEADER_TEXT_COLOR
-                tbl.Icon.ImageColor3 = UI_CONFIG.HEADER_TEXT_COLOR
-                if not tbl.Button:FindFirstChild("UIStroke") then
-                    local s = Instance.new("UIStroke") s.Color = Color3.fromRGB(50, 150, 255) s.Thickness = 1 s.Parent = tbl.Button
-                end
-            else
-                tbl.Button.BackgroundTransparency = 1
-                tbl.Label.TextColor3 = UI_CONFIG.TEXT_COLOR
-                tbl.Icon.ImageColor3 = UI_CONFIG.TEXT_COLOR
-                if tbl.Button:FindFirstChild("UIStroke") then tbl.Button.UIStroke:Destroy() end
-            end
+    tabBtn.MouseButton1Click:Connect(function()
+        if CurrentTab and CurrentTab.Button ~= tabBtn then
+            -- Deactivate current tab
+            TweenService:Create(CurrentTab.Button, TweenInfo.new(0.2), {BackgroundColor3 = CONFIG.SIDEBAR_BG}):Play()
+            TweenService:Create(CurrentTab.Button.Icon, TweenInfo.new(0.2), {ImageColor3 = CONFIG.SUBTEXT_COLOR}):Play()
+            TweenService:Create(CurrentTab.Button.Label, TweenInfo.new(0.2), {TextColor3 = CONFIG.SUBTEXT_COLOR}):Play()
+            CurrentTab.Content.Visible = false
+
+            -- Activate new tab
+            CurrentTab = {Button = tabBtn, Content = scrollFrame}
+            TweenService:Create(tabBtn, TweenInfo.new(0.2), {BackgroundColor3 = CONFIG.CARD_BG}):Play()
+            TweenService:Create(icon, TweenInfo.new(0.2), {ImageColor3 = CONFIG.ACCENT_COLOR}):Play()
+            TweenService:Create(label, TweenInfo.new(0.2), {TextColor3 = CONFIG.TEXT_COLOR}):Play()
+            scrollFrame.Visible = true
         end
-        currentTab = name
     end)
 
-    if name == currentTab then
-        btn.BackgroundColor3 = UI_CONFIG.ACCENT_COLOR
-        btn.BackgroundTransparency = 0
-        label.TextColor3 = UI_CONFIG.HEADER_TEXT_COLOR
-        icon.ImageColor3 = UI_CONFIG.HEADER_TEXT_COLOR
-        local s = Instance.new("UIStroke") s.Color = Color3.fromRGB(50, 150, 255) s.Thickness = 1 s.Parent = btn
+    Tabs[name] = {Button = tabBtn, Content = scrollFrame}
+
+    if not CurrentTab then
+        CurrentTab = {Button = tabBtn, Content = scrollFrame}
+        tabBtn.BackgroundColor3 = CONFIG.CARD_BG
+        icon.ImageColor3 = CONFIG.ACCENT_COLOR
+        label.TextColor3 = CONFIG.TEXT_COLOR
+        scrollFrame.Visible = true
     end
 
-    return contentScroll
+    return scrollFrame
 end
 
-local function createSection(parent, title, description)
-    local headerFrame = Instance.new("Frame")
-    headerFrame.Size = UDim2.new(1, 0, 0, description ~= "" and 38 or 20)
-    headerFrame.BackgroundTransparency = 1
-    headerFrame.Parent = parent
+--[[ Card Component Factories ]]--
 
-    local titleLbl = Instance.new("TextLabel")
-    titleLbl.Size = UDim2.new(1, 0, 0, 20)
-    titleLbl.BackgroundTransparency = 1
-    titleLbl.Text = title
-    titleLbl.TextColor3 = UI_CONFIG.HEADER_TEXT_COLOR
-    titleLbl.Font = Enum.Font.GothamBold
-    titleLbl.TextSize = 15
-    titleLbl.TextXAlignment = Enum.TextXAlignment.Left
-    titleLbl.Parent = headerFrame
-
-    if description ~= "" then
-        local descLbl = Instance.new("TextLabel")
-        descLbl.Size = UDim2.new(1, 0, 0, 16)
-        descLbl.Position = UDim2.new(0, 0, 0, 20)
-        descLbl.BackgroundTransparency = 1
-        descLbl.Text = description
-        descLbl.TextColor3 = UI_CONFIG.TEXT_COLOR
-        descLbl.Font = Enum.Font.Gotham
-        descLbl.TextSize = 12
-        descLbl.TextXAlignment = Enum.TextXAlignment.Left
-        descLbl.Parent = headerFrame
-    end
-
-    local container = Instance.new("Frame")
-    container.Size = UDim2.new(1, 0, 0, 0)
-    container.AutomaticSize = Enum.AutomaticSize.Y
-    container.BackgroundTransparency = 1
-    container.Parent = parent
-
-    local layout = Instance.new("UIListLayout")
-    layout.FillDirection = Enum.FillDirection.Vertical
-    layout.Padding = UDim.new(0, 8)
-    layout.Parent = container
-
-    return container
-end
-
--- 1. Carte Toggle Switch (Corrigée, sans texte superposé)
-local function createToggleCard(parent, title, description, callback)
+local function createToggle(parent, title, desc, default, callback)
     local card = Instance.new("Frame")
-    card.Size = UDim2.new(1, 0, 0, 52)
-    card.BackgroundColor3 = Color3.fromRGB(20, 23, 35)
+    card.Size = UDim2.new(1, -6, 0, 48)
+    card.BackgroundColor3 = CONFIG.CARD_BG
     card.BorderSizePixel = 0
     card.Parent = parent
+    ApplyCorner(card, 8)
+    ApplyStroke(card, CONFIG.BORDER_COLOR, 1, 0.6)
 
-    local cardCorner = Instance.new("UICorner") cardCorner.CornerRadius = UDim.new(0, 9) cardCorner.Parent = card
-    local cardStroke = Instance.new("UIStroke") cardStroke.Color = Color3.fromRGB(35, 45, 75) cardStroke.Thickness = 1 cardStroke.Parent = card
+    local titleLabel = Instance.new("TextLabel")
+    titleLabel.Size = UDim2.new(1, -70, 0, 20)
+    titleLabel.Position = UDim2.new(0, 12, 0, desc and 6 or 14)
+    titleLabel.Text = title
+    titleLabel.TextColor3 = CONFIG.TEXT_COLOR
+    titleLabel.TextSize = 13
+    titleLabel.Font = Enum.Font.GothamBold
+    titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    titleLabel.BackgroundTransparency = 1
+    titleLabel.Parent = card
 
-    local tLbl = Instance.new("TextLabel")
-    tLbl.Size = UDim2.new(0.65, 0, 0, 18) tLbl.Position = UDim2.new(0, 16, 0, 9)
-    tLbl.BackgroundTransparency = 1 tLbl.Text = title tLbl.TextColor3 = UI_CONFIG.HEADER_TEXT_COLOR
-    tLbl.Font = Enum.Font.GothamBold tLbl.TextSize = 13 tLbl.TextXAlignment = Enum.TextXAlignment.Left tLbl.Parent = card
+    if desc then
+        local descLabel = Instance.new("TextLabel")
+        descLabel.Size = UDim2.new(1, -70, 0, 16)
+        descLabel.Position = UDim2.new(0, 12, 0, 26)
+        descLabel.Text = desc
+        descLabel.TextColor3 = CONFIG.SUBTEXT_COLOR
+        descLabel.TextSize = 11
+        descLabel.Font = Enum.Font.Gotham
+        descLabel.TextXAlignment = Enum.TextXAlignment.Left
+        descLabel.BackgroundTransparency = 1
+        descLabel.Parent = card
+    end
 
-    local dLbl = Instance.new("TextLabel")
-    dLbl.Size = UDim2.new(0.65, 0, 0, 16) dLbl.Position = UDim2.new(0, 16, 0, 27)
-    dLbl.BackgroundTransparency = 1 dLbl.Text = description dLbl.TextColor3 = UI_CONFIG.TEXT_COLOR
-    dLbl.Font = Enum.Font.Gotham dLbl.TextSize = 11 dLbl.TextXAlignment = Enum.TextXAlignment.Left dLbl.Parent = card
+    local toggleSwitch = Instance.new("TextButton")
+    toggleSwitch.Size = UDim2.new(0, 42, 0, 22)
+    toggleSwitch.Position = UDim2.new(1, -54, 0.5, -11)
+    toggleSwitch.BackgroundColor3 = default and CONFIG.ACCENT_COLOR or Color3.fromRGB(45, 50, 68)
+    toggleSwitch.Text = ""
+    toggleSwitch.AutoButtonColor = false
+    toggleSwitch.Parent = card
+    ApplyCorner(toggleSwitch, 11)
 
-    local switchBg = Instance.new("TextButton")
-    switchBg.Size = UDim2.new(0, 46, 0, 24)
-    switchBg.Position = UDim2.new(1, -58, 0.5, -12)
-    switchBg.BackgroundColor3 = Color3.fromRGB(35, 40, 55)
-    switchBg.AutoButtonColor = false
-    switchBg.Text = ""
-    switchBg.Parent = card
+    local indicator = Instance.new("Frame")
+    indicator.Size = UDim2.new(0, 16, 0, 16)
+    indicator.Position = default and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
+    indicator.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    indicator.BorderSizePixel = 0
+    indicator.Parent = toggleSwitch
+    ApplyCorner(indicator, 8)
 
-    local switchCorner = Instance.new("UICorner") switchCorner.CornerRadius = UDim.new(1, 0) switchCorner.Parent = switchBg
+    local isOn = default or false
 
-    local switchCircle = Instance.new("Frame")
-    switchCircle.Size = UDim2.new(0, 18, 0, 18)
-    switchCircle.Position = UDim2.new(0, 3, 0.5, -9)
-    switchCircle.BackgroundColor3 = Color3.fromRGB(130, 140, 165)
-    switchCircle.BorderSizePixel = 0
-    switchCircle.Parent = switchBg
+    local function updateState()
+        local targetPos = isOn and UDim2.new(1, -19, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
+        local targetColor = isOn and CONFIG.ACCENT_COLOR or Color3.fromRGB(45, 50, 68)
+        TweenService:Create(indicator, TweenInfo.new(0.2), {Position = targetPos}):Play()
+        TweenService:Create(toggleSwitch, TweenInfo.new(0.2), {BackgroundColor3 = targetColor}):Play()
+        task.spawn(callback, isOn)
+    end
 
-    local circleCorner = Instance.new("UICorner") circleCorner.CornerRadius = UDim.new(1, 0) circleCorner.Parent = switchCircle
-
-    local enabled = false
-    switchBg.MouseButton1Click:Connect(function()
-        enabled = not enabled
-        if enabled then
-            switchBg.BackgroundColor3 = UI_CONFIG.ACCENT_COLOR
-            switchCircle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-            switchCircle:TweenPosition(UDim2.new(1, -21, 0.5, -9), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.15, true)
-        else
-            switchBg.BackgroundColor3 = Color3.fromRGB(35, 40, 55)
-            switchCircle.BackgroundColor3 = Color3.fromRGB(130, 140, 165)
-            switchCircle:TweenPosition(UDim2.new(0, 3, 0.5, -9), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.15, true)
-        end
-        callback(enabled)
+    toggleSwitch.MouseButton1Click:Connect(function()
+        isOn = not isOn
+        updateState()
     end)
 
     return card
 end
 
--- 2. Carte Slider Interactif (Pour la vitesse / jump)
-local function createSliderCard(parent, title, minVal, maxVal, defaultVal, callback)
+local function createSlider(parent, title, min, max, default, callback)
     local card = Instance.new("Frame")
-    card.Size = UDim2.new(1, 0, 0, 58)
-    card.BackgroundColor3 = Color3.fromRGB(20, 23, 35)
+    card.Size = UDim2.new(1, -6, 0, 56)
+    card.BackgroundColor3 = CONFIG.CARD_BG
     card.BorderSizePixel = 0
     card.Parent = parent
+    ApplyCorner(card, 8)
+    ApplyStroke(card, CONFIG.BORDER_COLOR, 1, 0.6)
 
-    local cardCorner = Instance.new("UICorner") cardCorner.CornerRadius = UDim.new(0, 9) cardCorner.Parent = card
-    local cardStroke = Instance.new("UIStroke") cardStroke.Color = Color3.fromRGB(35, 45, 75) cardStroke.Thickness = 1 cardStroke.Parent = card
+    local titleLabel = Instance.new("TextLabel")
+    titleLabel.Size = UDim2.new(1, -60, 0, 20)
+    titleLabel.Position = UDim2.new(0, 12, 0, 8)
+    titleLabel.Text = title
+    titleLabel.TextColor3 = CONFIG.TEXT_COLOR
+    titleLabel.TextSize = 13
+    titleLabel.Font = Enum.Font.GothamBold
+    titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    titleLabel.BackgroundTransparency = 1
+    titleLabel.Parent = card
 
-    local tLbl = Instance.new("TextLabel")
-    tLbl.Size = UDim2.new(0.4, 0, 0, 20) tLbl.Position = UDim2.new(0, 16, 0, 19)
-    tLbl.BackgroundTransparency = 1 tLbl.Text = title tLbl.TextColor3 = UI_CONFIG.HEADER_TEXT_COLOR
-    tLbl.Font = Enum.Font.GothamBold tLbl.TextSize = 13 tLbl.TextXAlignment = Enum.TextXAlignment.Left tLbl.Parent = card
+    local valueLabel = Instance.new("TextLabel")
+    valueLabel.Size = UDim2.new(0, 50, 0, 20)
+    valueLabel.Position = UDim2.new(1, -62, 0, 8)
+    valueLabel.Text = tostring(default)
+    valueLabel.TextColor3 = CONFIG.ACCENT_COLOR
+    valueLabel.TextSize = 13
+    valueLabel.Font = Enum.Font.GothamBold
+    valueLabel.TextXAlignment = Enum.TextXAlignment.Right
+    valueLabel.BackgroundTransparency = 1
+    valueLabel.Parent = card
 
-    local valBox = Instance.new("TextLabel")
-    valBox.Size = UDim2.new(0, 52, 0, 26) valBox.Position = UDim2.new(1, -64, 0.5, -13)
-    valBox.BackgroundColor3 = Color3.fromRGB(13, 15, 22) valBox.Text = tostring(defaultVal)
-    valBox.TextColor3 = UI_CONFIG.HEADER_TEXT_COLOR valBox.Font = Enum.Font.GothamBold valBox.TextSize = 12
-    valBox.Parent = card
-    local valCorner = Instance.new("UICorner") valCorner.CornerRadius = UDim.new(0, 6) valCorner.Parent = valBox
-
-    local sliderBar = Instance.new("TextButton")
-    sliderBar.Size = UDim2.new(0, 220, 0, 6) sliderBar.Position = UDim2.new(0, 160, 0.5, -3)
-    sliderBar.BackgroundColor3 = Color3.fromRGB(40, 45, 65) sliderBar.AutoButtonColor = false sliderBar.Text = ""
+    local sliderBar = Instance.new("Frame")
+    sliderBar.Size = UDim2.new(1, -24, 0, 6)
+    sliderBar.Position = UDim2.new(0, 12, 0, 36)
+    sliderBar.BackgroundColor3 = Color3.fromRGB(45, 50, 68)
+    sliderBar.BorderSizePixel = 0
     sliderBar.Parent = card
-    local barCorner = Instance.new("UICorner") barCorner.CornerRadius = Instance.new("UICorner").CornerRadius barCorner.Parent = sliderBar
+    ApplyCorner(sliderBar, 3)
 
-    local sliderFill = Instance.new("Frame")
-    sliderFill.Size = UDim2.new((defaultVal - minVal) / (maxVal - minVal), 0, 1, 0)
-    sliderFill.BackgroundColor3 = UI_CONFIG.ACCENT_COLOR sliderFill.BorderSizePixel = 0 sliderFill.Parent = sliderBar
-    local fillCorner = Instance.new("UICorner") fillCorner.CornerRadius = barCorner.CornerRadius fillCorner.Parent = sliderFill
+    local fill = Instance.new("Frame")
+    fill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
+    fill.BackgroundColor3 = CONFIG.ACCENT_COLOR
+    fill.BorderSizePixel = 0
+    fill.Parent = sliderBar
+    ApplyCorner(fill, 3)
 
-    local sliderBtn = Instance.new("Frame")
-    sliderBtn.Size = UDim2.new(0, 14, 0, 14) sliderBtn.Position = UDim2.new(1, -7, 0.5, -7)
-    sliderBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255) sliderBtn.BorderSizePixel = getfenv and sliderFill.Parent or sliderFill
-    sliderBtn.Parent = sliderFill
-    local btnCorner = Instance.new("UICorner") btnCorner.CornerRadius = UDim.new(1, 0) btnCorner.Parent = sliderBtn
+    local knob = Instance.new("Frame")
+    knob.Size = UDim2.new(0, 14, 0, 14)
+    knob.Position = UDim2.new((default - min) / (max - min), -7, 0.5, -7)
+    knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    knob.BorderSizePixel = 0
+    knob.Parent = sliderBar
+    ApplyCorner(knob, 7)
 
-    local UIS = game:GetService("UserInputService")
     local dragging = false
+    local function updateValue(input)
+        local relX = math.clamp((input.Position.X - sliderBar.AbsolutePosition.X) / sliderBar.AbsoluteSize.X, 0, 1)
+        local val = math.floor(min + (max - min) * relX)
+        fill.Size = UDim2.new(relX, 0, 1, 0)
+        knob.Position = UDim2.new(relX, -7, 0.5, -7)
+        valueLabel.Text = tostring(val)
+        task.spawn(callback, val)
+    end
 
-    sliderBar.MouseButton1Down:Connect(function() dragging = true end)
-    UIS.InputEnded:Connect(function(input)
+    knob.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true end
+    end)
+    UserInputService.InputEnded:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
     end)
-
-    UIS.InputChanged:Connect(function(input)
+    UserInputService.InputChanged:Connect(function(input)
         if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-            local mousePos = UIS:GetMouseLocation().X
-            local barPos = sliderBar.AbsolutePosition.X
-            local barSize = sliderBar.AbsoluteSize.X
-            local percent = math.clamp((mousePos - barPos) / barSize, 0, 1)
-            local currentVal = math.floor(minVal + (maxVal - minVal) * percent)
-            sliderFill.Size = UDim2.new(percent, 0, 1, 0)
-            valBox.Text = tostring(currentVal)
-            callback(currentVal)
+            updateValue(input)
         end
     end)
+
+    return card
 end
 
--- Création des onglets avec leurs icônes respectives
-local CombatTab = createTab("Combat", "rbxassetid://6023426915")
-local FarmingTab = createTab("Farming", "rbxassetid://6031265881")
-local VisualsTab = createTab("Visuals", "rbxassetid://6031302932")
-local JoueurTab = createTab("Joueur", "rbxassetid://6034818372")
-local TargetTab = createTab("Target", "rbxassetid://6023426915")   -- Nouvelle page Target
-local WebhookTab = createTab("Webhook", "rbxassetid://6031263323") -- Nouvelle page Webhook
-local MiscTab = createTab("Misc", "rbxassetid://6031263323")
-local SettingsTab = createTab("Settings", "rbxassetid://6023426915")
+local function createButton(parent, text, callback)
+    local card = Instance.new("Frame")
+    card.Size = UDim2.new(1, -6, 0, 42)
+    card.BackgroundColor3 = CONFIG.CARD_BG
+    card.BorderSizePixel = 0
+    card.Parent = parent
+    ApplyCorner(card, 8)
+    ApplyStroke(card, CONFIG.BORDER_COLOR, 1, 0.6)
 
--- ==========================================
--- REMPLISSAGE DES ONGLETS
--- ==========================================
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, 0, 1, 0)
+    btn.BackgroundTransparency = 1
+    btn.Text = text
+    btn.TextColor3 = CONFIG.TEXT_COLOR
+    btn.TextSize = 13
+    btn.Font = Enum.Font.GothamBold
+    btn.Parent = card
 
--- 1. COMBAT
-local secCombat = createSection(CombatTab, "Actions de Combat MM2", "Armes, tirs et éliminations.")
-createToggleCard(secCombat, "Kill All (Murderer)", "Élimine automatiquement tous les joueurs.", function(state) print("Kill All:", state) end)
-createToggleCard(secCombat, "Gun Drop Teleport", "Téléportation immédiate sur le revolver.", function(state) print("Gun Drop TP:", state) end)
-createToggleCard(secCombat, "Godmode / Anti-Kill", "Empêche d'être touché par le couteau.", function(state) print("Godmode:", state) end)
+    btn.MouseEnter:Connect(function()
+        TweenService:Create(card, TweenInfo.new(0.2), {BackgroundColor3 = CONFIG.ACCENT_COLOR}):Play()
+    end)
+    btn.MouseLeave:Connect(function()
+        TweenService:Create(card, TweenInfo.new(0.2), {BackgroundColor3 = CONFIG.CARD_BG}):Play()
+    end)
+    btn.MouseButton1Click:Connect(function()
+        task.spawn(callback)
+    end)
 
--- 2. FARMING
-local secFarming = createSection(FarmingTab, "Auto-Farm & Pièces", "Récupération automatique des pièces.")
-createToggleCard(secFarming, "Auto Coin Collect", "Collecte instantanée de toutes les pièces.", function(state) print("Auto Coin:", state) end)
-createToggleCard(secFarming, "Godmode Coin Bag", "Remplit votre sac de pièces au maximum.", function(state) print("Coin Bag:", state) end)
+    return card
+end
 
--- 3. VISUALS
-local secVisuals = createSection(VisualsTab, "ESP & Rôles en Direct", "Sachez qui est le Murderer et le Sheriff.")
-createToggleCard(secVisuals, "ESP Rôles (Murder / Sheriff)", "Box ESP Rouge (Murder), Bleu (Sheriff).", function(state) print("ESP:", state) end)
-createToggleCard(secVisuals, "Gun ESP (Revolver au sol)", "Trace une balise sur le pistolet lâché.", function(state) print("Gun ESP:", state) end)
-createToggleCard(secVisuals, "Fullbright (No Darkness)", "Supprime les ombres et éclaire la map.", function(state)
-    Lighting.Brightness = state and 2 or 1
-    Lighting.GlobalShadows = not state
-end)
+local function createTextBox(parent, title, placeholder, callback)
+    local card = Instance.new("Frame")
+    card.Size = UDim2.new(1, -6, 0, 52)
+    card.BackgroundColor3 = CONFIG.CARD_BG
+    card.BorderSizePixel = 0
+    card.Parent = parent
+    ApplyCorner(card, 8)
+    ApplyStroke(card, CONFIG.BORDER_COLOR, 1, 0.6)
 
--- 4. JOUEUR
-local secJoueur = createSection(JoueurTab, "Mouvements & Physique", "Personnalisez votre vitesse et vos sauts.")
-createSliderCard(secJoueur, "Walk Speed", 16, 120, 16, function(val)
-    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-        LocalPlayer.Character.Humanoid.WalkSpeed = val
-    end
-end)
-createSliderCard(secJoueur, "Jump Power", 50, 250, 50, function(val)
-    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-        LocalPlayer.Character.Humanoid.JumpPower = val
-    end
-end)
-createToggleCard(secJoueur, "Noclip (Traverser les murs)", "Passez à travers tous les murs de la map.", function(state) print("Noclip:", state) end)
+    local titleLabel = Instance.new("TextLabel")
+    titleLabel.Size = UDim2.new(1, -24, 0, 18)
+    titleLabel.Position = UDim2.new(0, 12, 0, 6)
+    titleLabel.Text = title
+    titleLabel.TextColor3 = CONFIG.TEXT_COLOR
+    titleLabel.TextSize = 12
+    titleLabel.Font = Enum.Font.GothamBold
+    titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    titleLabel.BackgroundTransparency = 1
+    titleLabel.Parent = card
 
--- 5. TARGET (Liste dynamique des joueurs en temps réel + options Fling)
-local secTargetHeader = createSection(TargetTab, "Cibles & Fling en Direct", "Liste mise à jour automatiquement des joueurs du serveur.")
+    local inputContainer = Instance.new("Frame")
+    inputContainer.Size = UDim2.new(1, -24, 0, 22)
+    inputContainer.Position = UDim2.new(0, 12, 0, 24)
+    inputContainer.BackgroundColor3 = Color3.fromRGB(20, 24, 36)
+    inputContainer.Parent = card
+    ApplyCorner(inputContainer, 5)
 
-local TargetListContainer = Instance.new("Frame")
-TargetListContainer.Size = UDim2.new(1, 0, 0, 0)
-TargetListContainer.AutomaticSize = Enum.AutomaticSize.Y
-TargetListContainer.BackgroundTransparency = 1
-TargetListContainer.Parent = TargetTab
+    local box = Instance.new("TextBox")
+    box.Size = UDim2.new(1, -10, 1, 0)
+    box.Position = UDim2.new(0, 5, 0, 0)
+    box.BackgroundTransparency = 1
+    box.Text = ""
+    box.PlaceholderText = placeholder or "Entrez la valeur..."
+    box.PlaceholderColor3 = CONFIG.SUBTEXT_COLOR
+    box.TextColor3 = CONFIG.TEXT_COLOR
+    box.TextSize = 11
+    box.Font = Enum.Font.Gotham
+    box.TextXAlignment = Enum.TextXAlignment.Left
+    box.ClearTextOnFocus = false
+    box.Parent = inputContainer
 
-local TargetLayout = Instance.new("UIListLayout")
-TargetLayout.FillDirection = Enum.FillDirection.Vertical
-TargetLayout.Padding = UDim.new(0, 8)
-TargetLayout.Parent = TargetListContainer
+    box.FocusLost:Connect(function(enterPressed)
+        task.spawn(callback, box.Text)
+    end)
 
-local function updateTargetList()
-    -- Nettoyage de l'ancienne liste
-    for _, child in pairs(TargetListContainer:GetChildren()) do
-        if child:IsA("Frame") then child:Destroy() end
-    end
+    return card
+end
 
-    -- Ajout des joueurs actuels
-    for _, plr in pairs(Players:GetPlayers()) do
-        if plr ~= LocalPlayer then
-            local card = Instance.new("Frame")
-            card.Size = UDim2.new(1, 0, 0, 46)
-            card.BackgroundColor3 = Color3.fromRGB(20, 23, 35)
-            card.BorderSizePixel = 0
-            card.Parent = TargetListContainer
+--[[ Special Component: Dynamic Auto-Updating Player Dropdown ]]--
+local function createPlayerDropdown(parent, callback)
+    local card = Instance.new("Frame")
+    card.Name = "PlayerDropdownCard"
+    card.Size = UDim2.new(1, -6, 0, 48)
+    card.BackgroundColor3 = CONFIG.CARD_BG
+    card.BorderSizePixel = 0
+    card.ClipsDescendants = false
+    card.Parent = parent
+    ApplyCorner(card, 8)
+    ApplyStroke(card, CONFIG.BORDER_COLOR, 1, 0.6)
 
-            local cCorner = Instance.new("UICorner") cCorner.CornerRadius = UDim.new(0, 8) cCorner.Parent = card
-            local cStroke = Instance.new("UIStroke") cStroke.Color = Color3.fromRGB(35, 45, 75) cStroke.Thickness = 1 cStroke.Parent = card
+    local headerBtn = Instance.new("TextButton")
+    headerBtn.Size = UDim2.new(1, 0, 0, 48)
+    headerBtn.BackgroundTransparency = 1
+    headerBtn.Text = ""
+    headerBtn.Parent = card
 
-            local nameLbl = Instance.new("TextLabel")
-            nameLbl.Size = UDim2.new(0.5, 0, 1, 0) nameLbl.Position = UDim2.new(0, 14, 0, 0)
-            nameLbl.BackgroundTransparency = 1 nameLbl.Text = plr.Name .." (".. plr.DisplayName ..")"
-            nameLbl.TextColor3 = UI_CONFIG.HEADER_TEXT_COLOR nameLbl.Font = Enum.Font.GothamBold nameLbl.TextSize = 12
-            nameLbl.TextXAlignment = Enum.TextXAlignment.Left nameLbl.Parent = card
+    local titleLabel = Instance.new("TextLabel")
+    titleLabel.Size = UDim2.new(1, -70, 0, 18)
+    titleLabel.Position = UDim2.new(0, 12, 0, 6)
+    titleLabel.Text = "Cible Joueur (Auto-Update)"
+    titleLabel.TextColor3 = CONFIG.TEXT_COLOR
+    titleLabel.TextSize = 13
+    titleLabel.Font = Enum.Font.GothamBold
+    titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    titleLabel.BackgroundTransparency = 1
+    titleLabel.Parent = headerBtn
 
-            local flingBtn = Instance.new("TextButton")
-            flingBtn.Size = UDim2.new(0, 75, 0, 28) flingBtn.Position = UDim2.new(1, -85, 0.5, -14)
-            flingBtn.BackgroundColor3 = Color3.fromRGB(180, 40, 40) flingBtn.Text = "FLING"
-            flingBtn.TextColor3 = Color3.fromRGB(255, 255, 255) flingBtn.Font = Enum.Font.GothamBold flingBtn.TextSize = 11
-            flingBtn.Parent = card
-            local fCorner = Instance.new("UICorner") fCorner.CornerRadius = UDim.new(0, 6) fCorner.Parent = flingBtn
+    local selectedLabel = Instance.new("TextLabel")
+    selectedLabel.Size = UDim2.new(1, -70, 0, 16)
+    selectedLabel.Position = UDim2.new(0, 12, 0, 24)
+    selectedLabel.Text = "Aucun joueur sélectionné"
+    selectedLabel.TextColor3 = CONFIG.ACCENT_COLOR
+    selectedLabel.TextSize = 11
+    selectedLabel.Font = Enum.Font.Gotham
+    selectedLabel.TextXAlignment = Enum.TextXAlignment.Left
+    selectedLabel.BackgroundTransparency = 1
+    selectedLabel.Parent = headerBtn
 
-            flingBtn.MouseButton1Click:Connect(function()
-                print("[NINJA MM2] Fling activé sur la cible : " .. plr.Name)
-            end)
+    local arrow = Instance.new("ImageLabel")
+    arrow.Size = UDim2.new(0, 16, 0, 16)
+    arrow.Position = UDim2.new(1, -30, 0.5, -8)
+    arrow.BackgroundTransparency = 1
+    arrow.Image = ICONS.Chevron
+    arrow.ImageColor3 = CONFIG.SUBTEXT_COLOR
+    arrow.Parent = headerBtn
+
+    -- List container for options
+    local optionsFrame = Instance.new("Frame")
+    optionsFrame.Size = UDim2.new(1, 0, 0, 0)
+    optionsFrame.Position = UDim2.new(0, 0, 1, 4)
+    optionsFrame.BackgroundColor3 = CONFIG.SIDEBAR_BG
+    optionsFrame.Visible = false
+    optionsFrame.ZIndex = 100
+    optionsFrame.Parent = card
+    ApplyCorner(optionsFrame, 8)
+    ApplyStroke(optionsFrame, CONFIG.ACCENT_COLOR, 1, 0.4)
+
+    local listLayout = Instance.new("UIListLayout")
+    listLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    listLayout.Padding = UDim.new(0, 4)
+    listLayout.Parent = optionsFrame
+
+    local listPadding = Instance.new("UIPadding")
+    listPadding.PaddingTop = UDim.new(0, 6)
+    listPadding.PaddingBottom = UDim.new(0, 6)
+    listPadding.PaddingLeft = UDim.new(0, 6)
+    listPadding.PaddingRight = UDim.new(0, 6)
+    listPadding.Parent = optionsFrame
+
+    local isOpen = false
+
+    local function refreshPlayers()
+        for _, child in ipairs(optionsFrame:GetChildren()) do
+            if child:IsA("TextButton") then child:Destroy() end
+        end
+
+        local count = 0
+        for _, plr in ipairs(Players:GetPlayers()) do
+            if plr ~= LocalPlayer then
+                count = count + 1
+                local pBtn = Instance.new("TextButton")
+                pBtn.Size = UDim2.new(1, 0, 0, 30)
+                pBtn.BackgroundColor3 = CONFIG.CARD_BG
+                pBtn.Text = "  " .. plr.DisplayName .. " (@" .. plr.Name .. ")"
+                pBtn.TextColor3 = CONFIG.TEXT_COLOR
+                pBtn.TextSize = 12
+                pBtn.Font = Enum.Font.GothamMedium
+                pBtn.TextXAlignment = Enum.TextXAlignment.Left
+                pBtn.ZIndex = 101
+                pBtn.Parent = optionsFrame
+                ApplyCorner(pBtn, 6)
+
+                pBtn.MouseButton1Click:Connect(function()
+                    selectedLabel.Text = plr.DisplayName .. " (@" .. plr.Name .. ")"
+                    State.SelectedTarget = plr.Name
+                    isOpen = false
+                    optionsFrame.Visible = false
+                    arrow.Rotation = 0
+                    card.Size = UDim2.new(1, -6, 0, 48)
+                    task.spawn(callback, plr)
+                end)
+            end
+        end
+
+        if isOpen then
+            optionsFrame.Size = UDim2.new(1, 0, 0, math.clamp(count * 34 + 12, 40, 160))
         end
     end
+
+    headerBtn.MouseButton1Click:Connect(function()
+        isOpen = not isOpen
+        optionsFrame.Visible = isOpen
+        arrow.Rotation = isOpen and 180 or 0
+        if isOpen then
+            refreshPlayers()
+        else
+            card.Size = UDim2.new(1, -6, 0, 48)
+        end
+    end)
+
+    -- Auto Update on Join / Leave
+    Players.PlayerAdded:Connect(function() if isOpen then refreshPlayers() end end)
+    Players.PlayerRemoving:Connect(function(plr)
+        if State.SelectedTarget == plr.Name then
+            State.SelectedTarget = ""
+            selectedLabel.Text = "Aucun joueur sélectionné"
+        end
+        if isOpen then refreshPlayers() end
+    end)
+
+    return card
 end
 
-updateTargetList()
-Players.PlayerAdded:Connect(updateTargetList)
-Players.PlayerRemoving:Connect(updateTargetList)
+--[[ Build UI Tabs ]]--
+local CombatTab  = createTab("Combat", ICONS.Combat)
+local FarmingTab = createTab("Farming", ICONS.Farming)
+local VisualsTab = createTab("Visuals", ICONS.Visuals)
+local JoueurTab  = createTab("Joueur", ICONS.Joueur)
+local TargetTab  = createTab("Target", ICONS.Target)
+local WebhookTab = createTab("Webhook", ICONS.Webhook)
+local MiscTab    = createTab("Misc", ICONS.Misc)
+local SettingsTab= createTab("Settings", ICONS.Settings)
 
--- 6. WEBHOOK
-local secWebhook = createSection(WebhookTab, "Configuration Webhook Discord", "Recevez les alertes de rôles et statistiques en direct.")
-createToggleCard(secWebhook, "Activer les Alertes Webhook", "Envoie un message sur Discord quand le Murderer est détecté.", function(state)
-    print("Webhook activé :", state)
+--[[ MM2 Game Helper Logic ]]--
+local function GetRoles()
+    local murderer, sheriff
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr.Character then
+            if plr.Character:FindFirstChild("Knife") or (plr:FindFirstChild("Backpack") and plr.Backpack:FindFirstChild("Knife")) then
+                murderer = plr
+            elseif plr.Character:FindFirstChild("Gun") or (plr:FindFirstChild("Backpack") and plr.Backpack:FindFirstChild("Gun")) then
+                sheriff = plr
+            end
+        end
+    end
+    return murderer, sheriff
+end
+
+-- 1. COMBAT TAB
+createToggle(CombatTab, "Auto Kill All (Murderer)", "Élimine instantanément tous les innocents", false, function(v)
+    State.KillAura = v
+    if v then
+        AddConnection("KillAuraLoop", RunService.Heartbeat:Connect(function()
+            if not State.KillAura then return end
+            local char = LocalPlayer.Character
+            local knife = char and (char:FindFirstChild("Knife") or LocalPlayer.Backpack:FindFirstChild("Knife"))
+            if knife and char:FindFirstChild("HumanoidRootPart") then
+                if knife.Parent ~= char then knife.Parent = char end
+                for _, p in ipairs(Players:GetPlayers()) do
+                    if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                        p.Character.HumanoidRootPart.CFrame = char.HumanoidRootPart.CFrame * CFrame.new(0, 0, -2)
+                        knife:Activate()
+                    end
+                end
+            end
+        end))
+    end
 end)
 
--- 7. MISC
-local secMisc = createSection(MiscTab, "Utilitaires & Serveur", "Commandes de serveur et téléportations.")
-createToggleCard(secMisc, "Anti-Lag / FPS Booster", "Optimise les graphismes pour un framerate maximal.", function(state) print("Anti-lag:", state) end)
-
--- 8. SETTINGS
-local secSettings = createSection(SettingsTab, "Paramètres du Menu", "Contrôles de l'interface.")
-createToggleCard(secSettings, "Fermer / Unload le Script", "Détruit complètement l'interface.", function(state)
-    if state then ScreenGui:Destroy() end
+createToggle(CombatTab, "Auto Shoot Murderer (Sheriff)", "Vise et tire automatiquement sur le tueur", false, function(v)
+    State.AutoShootMurderer = v
+    if v then
+        AddConnection("ShootMurdLoop", RunService.Heartbeat:Connect(function()
+            if not State.AutoShootMurderer then return end
+            local murd = GetRoles()
+            local char = LocalPlayer.Character
+            local gun = char and (char:FindFirstChild("Gun") or LocalPlayer.Backpack:FindFirstChild("Gun"))
+            if murd and murd.Character and gun and char:FindFirstChild("HumanoidRootPart") then
+                if gun.Parent ~= char then gun.Parent = char end
+                gun:Activate()
+            end
+        end))
+    end
 end)
 
-print("[NINJA MM2] Version 5.0 chargée avec succès avec Target dynamique, Webhook et Sliders de vitesse ! Fait par ENI <3")
+createToggle(CombatTab, "Auto Grab Dropped Gun", "Ramasse le pistolet tombé au sol dès qu'il pop", false, function(v)
+    State.AutoGrabGun = v
+    if v then
+        AddConnection("GrabGunLoop", RunService.Heartbeat:Connect(function()
+            if not State.AutoGrabGun then return end
+            local gunDrop = Workspace:FindFirstChild("GunDrop")
+            if gunDrop and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                LocalPlayer.Character.HumanoidRootPart.CFrame = gunDrop.CFrame
+            end
+        end))
+    end
+end)
+
+-- 2. FARMING TAB
+createToggle(FarmingTab, "Auto Farm Coins", "Ramasse automatiquement toutes les pièces de la map", false, function(v)
+    State.AutoFarm = v
+    if v then
+        AddConnection("FarmLoop", RunService.Heartbeat:Connect(function()
+            if not State.AutoFarm then return end
+            local coinContainer = Workspace:FindFirstChild("Normal") or Workspace:FindFirstChild("CoinContainer")
+            if coinContainer and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                for _, coin in ipairs(coinContainer:GetChildren()) do
+                    if coin:IsA("BasePart") and coin.Name == "Coin" then
+                        LocalPlayer.Character.HumanoidRootPart.CFrame = coin.CFrame
+                        task.wait(1 / State.FarmSpeed)
+                        break
+                    end
+                end
+            end
+        end))
+    end
+end)
+
+createSlider(FarmingTab, "Vitesse de Farm (Coins/sec)", 5, 50, 25, function(v)
+    State.FarmSpeed = v
+end)
+
+-- 3. VISUALS TAB (ESP)
+local HighlightStorage = {}
+createToggle(VisualsTab, "ESP Joueurs (Wallhack Roles)", "Affiche le tueur en rouge et le sheriff en bleu", false, function(v)
+    State.ESP_Players = v
+    if not v then
+        for _, hl in pairs(HighlightStorage) do hl:Destroy() end
+        HighlightStorage = {}
+    else
+        AddConnection("ESPLoop", RunService.Heartbeat:Connect(function()
+            if not State.ESP_Players then return end
+            local murderer, sheriff = GetRoles()
+            for _, p in ipairs(Players:GetPlayers()) do
+                if p ~= LocalPlayer and p.Character then
+                    local hl = HighlightStorage[p] or Instance.new("Highlight")
+                    hl.Adornee = p.Character
+                    hl.Parent = ScreenGui
+                    if p == murderer then
+                        hl.FillColor = Color3.fromRGB(255, 40, 40)
+                    elseif p == sheriff then
+                        hl.FillColor = Color3.fromRGB(0, 140, 255)
+                    else
+                        hl.FillColor = Color3.fromRGB(40, 255, 120)
+                    end
+                    HighlightStorage[p] = hl
+                end
+            end
+        end))
+    end
+end)
+
+-- 4. JOUEUR TAB
+createSlider(JoueurTab, "Vitesse de Déplacement (WalkSpeed)", 16, 120, 16, function(v)
+    State.WalkSpeed = v
+    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        LocalPlayer.Character.Humanoid.WalkSpeed = v
+    end
+end)
+
+createSlider(JoueurTab, "Hauteur de Saut (JumpPower)", 50, 200, 50, function(v)
+    State.JumpPower = v
+    if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        LocalPlayer.Character.Humanoid.JumpPower = v
+    end
+end)
+
+createToggle(JoueurTab, "Infinite Jump", "Sautez indéfiniment dans les airs", false, function(v)
+    State.InfiniteJump = v
+    if v then
+        AddConnection("InfJump", UserInputService.JumpRequest:Connect(function()
+            if State.InfiniteJump and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+                LocalPlayer.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+            end
+        end))
+    end
+end)
+
+createToggle(JoueurTab, "Noclip (Traverser les murs)", "Passe à travers toutes les parois du jeu", false, function(v)
+    State.Noclip = v
+    if v then
+        AddConnection("NoclipLoop", RunService.Stepped:Connect(function()
+            if State.Noclip and LocalPlayer.Character then
+                for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
+                    if part:IsA("BasePart") then part.CanCollide = false end
+                end
+            end
+        end))
+    end
+end)
+
+-- 5. TARGET TAB (Dynamic Volet Roulant + Target Actions)
+createPlayerDropdown(TargetTab, function(plr)
+    print("Cible sélectionnée :", plr.Name)
+end)
+
+createButton(TargetTab, "Téléporter sur la Cible", function()
+    if State.SelectedTarget ~= "" then
+        local targetPlr = Players:FindFirstChild(State.SelectedTarget)
+        if targetPlr and targetPlr.Character and targetPlr.Character:FindFirstChild("HumanoidRootPart") and LocalPlayer.Character then
+            LocalPlayer.Character.HumanoidRootPart.CFrame = targetPlr.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)
+        end
+    end
+end)
+
+createToggle(TargetTab, "Spectate la Cible", "Observe le joueur sélectionné en direct", false, function(v)
+    State.Spectating = v
+    if v and State.SelectedTarget ~= "" then
+        local targetPlr = Players:FindFirstChild(State.SelectedTarget)
+        if targetPlr and targetPlr.Character and targetPlr.Character:FindFirstChild("Humanoid") then
+            Workspace.CurrentCamera.CameraSubject = targetPlr.Character.Humanoid
+        end
+    else
+        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+            Workspace.CurrentCamera.CameraSubject = LocalPlayer.Character.Humanoid
+        end
+    end
+end)
+
+createButton(TargetTab, "Fling Target (Propulser la cible)", function()
+    if State.SelectedTarget ~= "" then
+        local targetPlr = Players:FindFirstChild(State.SelectedTarget)
+        if targetPlr and targetPlr.Character and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            local hrp = LocalPlayer.Character.HumanoidRootPart
+            local oldPos = hrp.CFrame
+            for i = 1, 30 do
+                if targetPlr.Character and targetPlr.Character:FindFirstChild("HumanoidRootPart") then
+                    hrp.CFrame = targetPlr.Character.HumanoidRootPart.CFrame
+                    hrp.Velocity = Vector3.new(9999, 9999, 9999)
+                    task.wait(0.02)
+                end
+            end
+            hrp.CFrame = oldPos
+            hrp.Velocity = Vector3.new(0,0,0)
+        end
+    end
+end)
+
+-- 6. WEBHOOK TAB
+createTextBox(WebhookTab, "URL Discord Webhook", "https://discord.com/api/webhooks/...", function(url)
+    State.WebhookURL = url
+end)
+
+createButton(WebhookTab, "Envoyer un Log de Test", function()
+    if State.WebhookURL ~= "" then
+        local req = (syn and syn.request) or (http and http.request) or request or HttpService.RequestAsync
+        if req then
+            req({
+                Url = State.WebhookURL,
+                Method = "POST",
+                Headers = {["Content-Type"] = "application/json"},
+                Body = HttpService:JSONEncode({
+                    content = "🔥 **MM2 Rebel Edition Log**\nJoueur: " .. LocalPlayer.Name .. "\nStatut: UI Opérationnelle !"
+                })
+            })
+        end
+    end
+end)
+
+-- 7. MISC & GIVE WEAPONS TAB
+createButton(MiscTab, "Equipper Toutes les Armes", function()
+    if LocalPlayer:FindFirstChild("Backpack") and LocalPlayer.Character then
+        for _, item in ipairs(LocalPlayer.Backpack:GetChildren()) do
+            if item:IsA("Tool") then
+                item.Parent = LocalPlayer.Character
+            end
+        end
+    end
+end)
+
+createButton(MiscTab, "Faire Tomber l'Arme / Drop Weapon", function()
+    if LocalPlayer.Character then
+        local tool = LocalPlayer.Character:FindFirstChildOfClass("Tool")
+        if tool then tool.Parent = Workspace end
+    end
+end)
+
+createButton(MiscTab, "Rejoindre un autre serveur (Server Hop)", function()
+    local TeleportService = game:GetService("TeleportService")
+    TeleportService:Teleport(game.PlaceId, LocalPlayer)
+end)
+
+-- 8. SETTINGS TAB
+createButton(SettingsTab, "Réinitialiser les Réglages UI", function()
+    MainContainer.Position = UDim2.new(0.5, -CONFIG.FULL_MODE_SIZE.X.Offset / 2, 0.5, -CONFIG.FULL_MODE_SIZE.Y.Offset / 2)
+end)
+
+createButton(SettingsTab, "Fermer & Décharger le Script", function()
+    ScreenGui:Destroy()
+    for _, conn in pairs(Connections) do
+        conn:Disconnect()
+    end
+end)
+
+print("=========================================")
+print("MM2 REBEL EDITION V2 LOADED SUCCESSFULLY!")
+print("=========================================")
