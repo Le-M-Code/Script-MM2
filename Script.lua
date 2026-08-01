@@ -9,11 +9,12 @@ local UserInputService = game:GetService("UserInputService")
 --[[ Configuration ]]--
 local CONFIG = {
     UI_NAME = "MM2 Premium UI",
-    MAIN_COLOR = Color3.fromRGB(40, 40, 40), -- Couleur de fond principale
-    ACCENT_COLOR = Color3.fromRGB(0, 120, 255), -- Couleur d'accentuation (bleu)
-    TEXT_COLOR = Color3.fromRGB(255, 255, 255), -- Couleur du texte
-    GLASS_ALPHA = 0.2, -- Transparence pour l'effet Glassmorphism
-    GLASS_BLUR = 10, -- Intensité du flou pour l'effet Glassmorphism
+    MAIN_COLOR = Color3.fromRGB(20, 20, 20), -- Fond noir profond
+    ACCENT_COLOR = Color3.fromRGB(0, 255, 255), -- Néon Cyan
+    NEON_COLOR_SECONDARY = Color3.fromRGB(255, 0, 255), -- Néon Magenta (pour les accents)
+    TEXT_COLOR = Color3.fromRGB(230, 230, 230), -- Texte gris clair
+    GLASS_ALPHA = 0.1, -- Transparence subtile pour le Glassmorphism
+    GLASS_BLUR = 8, -- Flou légèrement réduit pour le minimalisme
     ANIMATION_TIME = 0.2, -- Durée des animations en secondes
     MINI_MODE_SIZE = UDim2.new(0, 50, 0, 50), -- Taille du bouton en mode mini
     FULL_MODE_SIZE = UDim2.new(0, 600, 0, 400), -- Taille de l'interface en mode complet
@@ -26,6 +27,14 @@ local function createFrame(parent, name, size, position, color, transparency, bo
     frame.Size = size or UDim2.new(0, 200, 0, 100)
     frame.Position = position or UDim2.new(0.5, -100, 0.5, -50)
     frame.BackgroundColor3 = color or CONFIG.MAIN_COLOR
+    if transparency == nil or transparency == 0 then -- Appliquer un UIStroke par défaut pour les éléments non transparents
+        local stroke = Instance.new("UIStroke")
+        stroke.Thickness = 1
+        stroke.Color = CONFIG.ACCENT_COLOR
+        stroke.Transparency = 0.7
+        stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+        stroke.Parent = frame
+    end
     frame.BackgroundTransparency = transparency or 0
     frame.BorderSizePixel = border or 0
     frame.Parent = parent
@@ -47,7 +56,7 @@ local function createTextLabel(parent, name, text, size, position, textColor, te
     label.Position = position or UDim2.new(0, 0, 0, 0)
     label.TextColor3 = textColor or CONFIG.TEXT_COLOR
     label.TextSize = textSize or 18
-    label.Font = textFont or Enum.Font.GothamBold
+    label.Font = textFont or Enum.Font.Gotham
     label.BackgroundTransparency = 1
     label.TextXAlignment = textXAlignment or Enum.TextXAlignment.Center
     label.TextYAlignment = textYAlignment or Enum.TextYAlignment.Center
@@ -65,7 +74,7 @@ local function createTextButton(parent, name, text, size, position, color, trans
     button.BackgroundTransparency = transparency or 0
     button.TextColor3 = textColor or CONFIG.TEXT_COLOR
     button.TextSize = textSize or 16
-    button.Font = textFont or Enum.Font.GothamBold
+    button.Font = textFont or Enum.Font.Gotham
     button.BorderSizePixel = 0
     button.Parent = parent
 
@@ -94,8 +103,8 @@ MainContainer.ClipsDescendants = true
 -- Effet visuel Premium (Bordure Glassmorphism)
 local UIStroke = Instance.new("UIStroke")
 UIStroke.Thickness = 1.5
-UIStroke.Color = Color3.fromRGB(255, 255, 255)
-UIStroke.Transparency = 0.8
+UIStroke.Color = CONFIG.ACCENT_COLOR
+UIStroke.Transparency = 0.6
 UIStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 UIStroke.Parent = MainContainer
 
@@ -108,8 +117,8 @@ GlassBlur.Parent = game:GetService("Lighting")
 
 -- Header de l'UI
 local Header = createFrame(MainContainer, "Header", UDim2.new(1, 0, 0, 40), UDim2.new(0, 0, 0, 0), CONFIG.MAIN_COLOR, 0.1, 0, 0)
-local TitleLabel = createTextLabel(Header, "TitleLabel", CONFIG.UI_NAME, UDim2.new(1, -50, 1, 0), UDim2.new(0, 0, 0, 0), CONFIG.TEXT_COLOR, 20, Enum.Font.GothamBold)
-local CloseButton = createTextButton(Header, "CloseButton", "X", UDim2.new(0, 40, 1, 0), UDim2.new(1, -40, 0, 0), Color3.fromRGB(200, 0, 0), 0, CONFIG.TEXT_COLOR, 18, Enum.Font.GothamBold, 0)
+local TitleLabel = createTextLabel(Header, "TitleLabel", CONFIG.UI_NAME, UDim2.new(1, -50, 1, 0), UDim2.new(0, 0, 0, 0), CONFIG.TEXT_COLOR, 20, Enum.Font.Gotham
+local CloseButton = createTextButton(Header, "CloseButton", "X", UDim2.new(0, 40, 1, 0), UDim2.new(1, -40, 0, 0), CONFIG.NEON_COLOR_SECONDARY, 0, CONFIG.TEXT_COLOR, 18, Enum.Font.Gotham, 0)
 
 -- Conteneur pour les onglets
 local TabContainer = createFrame(MainContainer, "TabContainer", UDim2.new(0, 150, 1, -40), UDim2.new(0, 0, 0, 40), CONFIG.MAIN_COLOR, 0.1, 0, 0)
@@ -124,7 +133,13 @@ local ContentContainer = createFrame(MainContainer, "ContentContainer", UDim2.ne
 ContentContainer.ClipsDescendants = true
 
 --[[ Logique du mode mini ]]--
-local MiniModeButton = createTextButton(playerGui, "MiniModeButton", "MM2", CONFIG.MINI_MODE_SIZE, UDim2.new(0, 10, 0, 10), CONFIG.ACCENT_COLOR, 0, CONFIG.TEXT_COLOR, 16, Enum.Font.GothamBold, 5)
+local MiniModeButton = createTextButton(playerGui, "MiniModeButton", "MM2", CONFIG.MINI_MODE_SIZE, UDim2.new(0, 10, 0, 10), CONFIG.ACCENT_COLOR, 0, CONFIG.TEXT_COLOR, 16, Enum.Font.Gotham, 5)
+local MiniModeStroke = Instance.new("UIStroke")
+MiniModeStroke.Thickness = 2
+MiniModeStroke.Color = CONFIG.NEON_COLOR_SECONDARY
+MiniModeStroke.Transparency = 0.5
+MiniModeStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+MiniModeStroke.Parent = MiniModeButton
 MiniModeButton.ZIndex = 1000 -- S'assure qu'il est toujours visible
 
 local isUIOpen = true
@@ -148,8 +163,8 @@ local function toggleUIVisibility()
         TweenService:Create(GlassBlur, tweenInfo, {Size = CONFIG.GLASS_BLUR}):Play()
         
         -- Animation du bouton mini (disparition)
-        TweenService:Create(MiniModeButton, tweenInfo, {Size = UDim2.new(0, 0, 0, 0), BackgroundTransparency = 1}):Play()
-        task.delay(0.4, function() MiniModeButton.Visible = false end)
+    TweenService:Create(MiniModeButton, tweenInfo, {Size = UDim2.new(0, 0, 0, 0), BackgroundTransparency = 1, TextTransparency = 1}):Play()
+    task.delay(0.4, function() MiniModeButton.Visible = false end)
     else
         TweenService:Create(MainContainer, tweenInfo, {
             Size = UDim2.new(0, 0, 0, 0),
@@ -160,10 +175,11 @@ local function toggleUIVisibility()
         TweenService:Create(GlassBlur, tweenInfo, {Size = 0}):Play()
         
         -- Animation du bouton mini (apparition)
-        MiniModeButton.Visible = true
-        MiniModeButton.Size = UDim2.new(0, 0, 0, 0)
-        MiniModeButton.BackgroundTransparency = 1
-        TweenService:Create(MiniModeButton, tweenInfo, {Size = CONFIG.MINI_MODE_SIZE, BackgroundTransparency = 0}):Play()
+    MiniModeButton.Visible = true
+    MiniModeButton.Size = UDim2.new(0, 0, 0, 0)
+    MiniModeButton.BackgroundTransparency = 1
+    MiniModeButton.TextTransparency = 1
+    TweenService:Create(MiniModeButton, tweenInfo, {Size = CONFIG.MINI_MODE_SIZE, BackgroundTransparency = 0, TextTransparency = 0}):Play()
         
         task.delay(0.4, function() MainContainer.Visible = false end)
     end
@@ -176,6 +192,8 @@ MiniModeButton.MouseButton1Click:Connect(toggleUIVisibility)
 MainContainer.Size = CONFIG.FULL_MODE_SIZE
 MainContainer.Position = UDim2.new(0.5, -CONFIG.FULL_MODE_SIZE.X.Offset / 2, 0.5, -CONFIG.FULL_MODE_SIZE.Y.Offset / 2)
 MiniModeButton.Visible = false -- Le bouton mini est caché au démarrage car l'UI est ouverte
+MiniModeButton.BackgroundTransparency = 1 -- Assurez-vous qu'il est complètement transparent au début
+MiniModeButton.TextTransparency = 1 -- Assurez-vous que le texte est complètement transparent au début
 
 -- Fonction de Drag générique
 local function makeDraggable(frame, handle)
@@ -218,7 +236,7 @@ local Tabs = {}
 local CurrentTab = nil
 
 local function createTab(tabName)
-    local tabButton = createTextButton(TabContainer, tabName .. "Tab", tabName, UDim2.new(1, -10, 0, 35), nil, CONFIG.MAIN_COLOR, 0.2, CONFIG.TEXT_COLOR, 14, Enum.Font.GothamBold, 5)
+    local tabButton = createTextButton(TabContainer, tabName .. "Tab", tabName, UDim2.new(1, -10, 0, 35), nil, CONFIG.MAIN_COLOR, 0.2, CONFIG.TEXT_COLOR, 14, Enum.Font.Gotham, 5)
     
     local tabContent = Instance.new("CanvasGroup")
     tabContent.Name = tabName .. "Content"
@@ -283,6 +301,12 @@ end
 local function createToggle(parent, text, default, callback)
     local toggleFrame = createFrame(parent, text .. "Toggle", UDim2.new(1, 0, 0, 35), nil, CONFIG.MAIN_COLOR, 0.3, 0, 5)
     local toggleLabel = createTextLabel(toggleFrame, "Label", text, UDim2.new(1, -50, 1, 0), UDim2.new(0, 10, 0, 0), CONFIG.TEXT_COLOR, 14, Enum.Font.Gotham, Enum.TextXAlignment.Left)
+    local toggleStroke = Instance.new("UIStroke")
+    toggleStroke.Thickness = 1
+    toggleStroke.Color = CONFIG.ACCENT_COLOR
+    toggleStroke.Transparency = 0.7
+    toggleStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    toggleStroke.Parent = toggleFrame
     
     local toggleButton = createTextButton(toggleFrame, "Button", "", UDim2.new(0, 40, 0, 20), UDim2.new(1, -45, 0.5, -10), Color3.fromRGB(100, 100, 100), 0, CONFIG.TEXT_COLOR, 0, Enum.Font.Gotham, 10)
     local toggleIndicator = createFrame(toggleButton, "Indicator", UDim2.new(0, 16, 0, 16), UDim2.new(0, 2, 0.5, -8), CONFIG.TEXT_COLOR, 0, 0, 8)
@@ -311,6 +335,12 @@ end
 local function createSlider(parent, text, min, max, default, callback)
     local sliderFrame = createFrame(parent, text .. "Slider", UDim2.new(1, 0, 0, 50), nil, CONFIG.MAIN_COLOR, 0.3, 0, 5)
     local sliderLabel = createTextLabel(sliderFrame, "Label", text .. ": " .. tostring(default), UDim2.new(1, -20, 0, 20), UDim2.new(0, 10, 0, 5), CONFIG.TEXT_COLOR, 14, Enum.Font.Gotham, Enum.TextXAlignment.Left)
+    local sliderStroke = Instance.new("UIStroke")
+    sliderStroke.Thickness = 1
+    sliderStroke.Color = CONFIG.ACCENT_COLOR
+    sliderStroke.Transparency = 0.7
+    sliderStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    sliderStroke.Parent = sliderFrame
     
     local sliderBar = createFrame(sliderFrame, "Bar", UDim2.new(1, -20, 0, 6), UDim2.new(0, 10, 0, 35), Color3.fromRGB(60, 60, 60), 0, 0, 3)
     local sliderFill = createFrame(sliderBar, "Fill", UDim2.new((default - min) / (max - min), 0, 1, 0), UDim2.new(0, 0, 0, 0), CONFIG.ACCENT_COLOR, 0, 0, 3)
@@ -352,8 +382,14 @@ end
 local function createDropdown(parent, text, options, callback)
     local dropdownFrame = createFrame(parent, text .. "Dropdown", UDim2.new(1, 0, 0, 35), nil, CONFIG.MAIN_COLOR, 0.3, 0, 5)
     local dropdownLabel = createTextLabel(dropdownFrame, "Label", text, UDim2.new(1, -30, 1, 0), UDim2.new(0, 10, 0, 0), CONFIG.TEXT_COLOR, 14, Enum.Font.Gotham, Enum.TextXAlignment.Left)
+    local dropdownStroke = Instance.new("UIStroke")
+    dropdownStroke.Thickness = 1
+    dropdownStroke.Color = CONFIG.ACCENT_COLOR
+    dropdownStroke.Transparency = 0.7
+    dropdownStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    dropdownStroke.Parent = dropdownFrame
     
-    local arrow = createTextLabel(dropdownFrame, "Arrow", ">", UDim2.new(0, 20, 1, 0), UDim2.new(1, -25, 0, 0), CONFIG.TEXT_COLOR, 14, Enum.Font.GothamBold)
+    local arrow = createTextLabel(dropdownFrame, "Arrow", ">", UDim2.new(0, 20, 1, 0), UDim2.new(1, -25, 0, 0), CONFIG.TEXT_COLOR, 14, Enum.Font.Gotham)
     
     local listFrame = createFrame(parent, text .. "List", UDim2.new(1, 0, 0, #options * 30), nil, CONFIG.MAIN_COLOR, 0.1, 0, 5)
     listFrame.Visible = false
@@ -364,8 +400,8 @@ local function createDropdown(parent, text, options, callback)
     
     local listStroke = Instance.new("UIStroke")
     listStroke.Thickness = 1
-    listStroke.Color = Color3.fromRGB(255, 255, 255)
-    listStroke.Transparency = 0.8
+    listStroke.Color = CONFIG.ACCENT_COLOR
+    listStroke.Transparency = 0.7
     listStroke.Parent = listFrame
     
     for _, option in ipairs(options) do
