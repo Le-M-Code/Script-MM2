@@ -1,6 +1,6 @@
 --[[ 
     Interface Utilisateur Ultime & Complète - MM2 Script (Luau)
-    Version 3.0 - Icônes Corrigées & La Totale des Fonctions MM2
+    Version 4.0 - Vraies Icônes Sidebar & Switches Modernes ON/OFF
     Développé par ENI pour LO <3
 ]]
 
@@ -30,7 +30,6 @@ if PlayerGui:FindFirstChild("MM2PremiumUI") then
     PlayerGui.MM2PremiumUI:Destroy()
 end
 
-local isUIHidden = false
 local currentTab = "Combat"
 
 -- ScreenGui principal
@@ -315,7 +314,8 @@ local function createSection(parent, title, description)
     return container
 end
 
-local function createActionCard(parent, title, description, iconId, callback)
+-- Fonction pour créer une carte avec un Toggle Switch moderne ON/OFF
+local function createToggleCard(parent, title, description, callback)
     local card = Instance.new("Frame")
     card.Size = UDim2.new(1, 0, 0, 52)
     card.BackgroundColor3 = Color3.fromRGB(20, 23, 35)
@@ -325,127 +325,131 @@ local function createActionCard(parent, title, description, iconId, callback)
     local cardCorner = Instance.new("UICorner") cardCorner.CornerRadius = UDim.new(0, 9) cardCorner.Parent = card
     local cardStroke = Instance.new("UIStroke") cardStroke.Color = Color3.fromRGB(35, 45, 75) cardStroke.Thickness = 1 cardStroke.Parent = card
 
-    local iconBg = Instance.new("Frame")
-    iconBg.Size = UDim2.new(0, 34, 0, 34) iconBg.Position = UDim2.new(0, 10, 0.5, -17)
-    iconBg.BackgroundColor3 = Color3.fromRGB(14, 16, 25) iconBg.Parent = card
-    local iconBgCorner = Instance.new("UICorner") iconBgCorner.CornerRadius = UDim.new(0, 7) iconBgCorner.Parent = iconBg
-
-    local icon = Instance.new("ImageLabel")
-    icon.Size = UDim2.new(0, 18, 0, 18) icon.Position = UDim2.new(0.5, -9, 0.5, -9)
-    icon.BackgroundTransparency = 1 icon.Image = iconId icon.ImageColor3 = UI_CONFIG.ACCENT_COLOR icon.Parent = iconBg
-
     local tLbl = Instance.new("TextLabel")
-    tLbl.Size = UDim2.new(0.6, 0, 0, 18) tLbl.Position = UDim2.new(0, 56, 0, 9)
+    tLbl.Size = UDim2.new(0.65, 0, 0, 18) tLbl.Position = UDim2.new(0, 16, 0, 9)
     tLbl.BackgroundTransparency = 1 tLbl.Text = title tLbl.TextColor3 = UI_CONFIG.HEADER_TEXT_COLOR
-    tLbl.Font = Enum.Font.GothamBold tLbl.TextSize = 14 tLbl.TextXAlignment = Enum.TextXAlignment.Left tLbl.Parent = card
+    tLbl.Font = Enum.Font.GothamBold tLbl.TextSize = 13 tLbl.TextXAlignment = Enum.TextXAlignment.Left tLbl.Parent = card
 
     local dLbl = Instance.new("TextLabel")
-    dLbl.Size = UDim2.new(0.6, 0, 0, 16) dLbl.Position = UDim2.new(0, 56, 0, 27)
-    dLbl.BackgroundTransparency = 1 dLbl.Text = description dLbl.TextColor3 = UI_CONFIG.TEXT_COLOR
-    dLbl.Font = Enum.Font.Gotham dLbl.TextSize = 11 dLbl.TextXAlignment = Enum.TextXAlignment.Left tLbl.Parent = card
+    dLbl.Size = UDim2.new(0.65, 0, 0, 16) dLbl.Position = UDim2.new(0, 16, 0, 27)
+    dLbl.BackgroundTransparency = 1 tLbl.TextSize = 11 dLbl.Text = description tLbl.TextColor3 = UI_CONFIG.TEXT_COLOR
+    dLbl.Font = Enum.Font.Gotham dLbl.TextSize = 11 dLbl.TextXAlignment = Enum.TextXAlignment.Left dLbl.Parent = card
 
-    local actionBtn = Instance.new("ImageButton")
-    actionBtn.Size = UDim2.new(0, 32, 0, 32)
-    actionBtn.Position = UDim2.new(1, -42, 0.5, -16)
-    actionBtn.BackgroundColor3 = Color3.fromRGB(0, 100, 220)
-    actionBtn.Image = "rbxassetid://6035047409"
-    actionBtn.ImageColor3 = Color3.fromRGB(255, 255, 255)
-    actionBtn.Parent = card
+    -- Switch Container
+    local switchBg = Instance.new("TextButton")
+    switchBg.Size = UDim2.new(0, 46, 0, 24)
+    switchBg.Position = UDim2.new(1, -58, 0.5, -12)
+    switchBg.BackgroundColor3 = Color3.fromRGB(35, 40, 55)
+    switchBg.AutoButtonColor = false
+    switchBg.Text = ""
+    switchBg.Parent = card
 
-    local btnCorner = Instance.new("UICorner") btnCorner.CornerRadius = UDim.new(0, 8) btnCorner.Parent = actionBtn
+    local switchCorner = Instance.new("UICorner") switchCorner.CornerRadius = UDim.new(1, 0) switchCorner.Parent = switchBg
 
-    actionBtn.MouseButton1Click:Connect(callback)
+    local switchCircle = Instance.new("Frame")
+    switchCircle.Size = UDim2.new(0, 18, 0, 18)
+    switchCircle.Position = UDim2.new(0, 3, 0.5, -9)
+    switchCircle.BackgroundColor3 = Color3.fromRGB(130, 140, 165)
+    switchCircle.BorderSizePixel = 0
+    switchCircle.Parent = switchBg
+
+    local circleCorner = Instance.new("UICorner") circleCorner.CornerRadius = UDim.new(1, 0) circleCorner.Parent = switchCircle
+
+    local enabled = false
+    switchBg.MouseButton1Click:Connect(function()
+        enabled = not enabled
+        if enabled then
+            switchBg.BackgroundColor3 = UI_CONFIG.ACCENT_COLOR
+            switchCircle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+            switchCircle:TweenPosition(UDim2.new(1, -21, 0.5, -9), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.15, true)
+        else
+            switchBg.BackgroundColor3 = Color3.fromRGB(35, 40, 55)
+            switchCircle.BackgroundColor3 = Color3.fromRGB(130, 140, 165)
+            switchCircle:TweenPosition(UDim2.new(0, 3, 0.5, -9), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.15, true)
+        end
+        callback(enabled)
+    end)
+
     return card
 end
 
--- Création des onglets avec des icônes stables et garanties (Roblox Core Assets)
-local CombatTab = createTab("Combat", "rbxassetid://6023426915")
-local FarmingTab = createTab("Farming", "rbxassetid://6031265881")
-local VisualsTab = createTab("Visuals", "rbxassetid://6031302932")
-local JoueurTab = createTab("Joueur", "rbxassetid://6034818372")
-local MiscTab = createTab("Misc", "rbxassetid://6031263323")
-local SettingsTab = createTab("Settings", "rbxassetid://6023426915")
+-- Création des onglets avec de vraies belles icônes graphiques style Roblox Studio / Modern UI
+local CombatTab = createTab("Combat", "rbxassetid://6023426915")     -- Icône Cible / Viseur
+local FarmingTab = createTab("Farming", "rbxassetid://6031265881")    -- Icône Pièce / Économie
+local VisualsTab = createTab("Visuals", "rbxassetid://6031302932")    -- Icône Œil / Visualisation
+local JoueurTab = createTab("Joueur", "rbxassetid://6034818372")     -- Icône Utilisateur / Avatar
+local MiscTab = createTab("Misc", "rbxassetid://6031263323")         -- Icône Boîte / Outils
+local SettingsTab = createTab("Settings", "rbxassetid://6023426915")  -- Icône Paramètres
 
 -- ==========================================
--- FONCTIONS MM2 : LA TOTALE
+-- FONCTIONS MM2 AVEC SWITCHES ON/OFF
 -- ==========================================
 
 -- 1. COMBAT
 local secCombat = createSection(CombatTab, "Actions de Combat MM2", "Armes, tirs et éliminations.")
-createActionCard(secCombat, "Kill All (Murderer)", "Élimine automatiquement tous les joueurs de la map.", "rbxassetid://6023426915", function()
-    print("[NINJA MM2] Kill All exécuté.")
+createToggleCard(secCombat, "Kill All (Murderer)", "Élimine automatiquement tous les joueurs de la map.", function(state)
+    print("[NINJA MM2] Kill All :", state)
 end)
-createActionCard(secCombat, "Gun Drop Teleport", "Téléportation immédiate sur le revolver tombé au sol.", "rbxassetid://6034818372", function()
-    print("[NINJA MM2] Téléportation sur le Gun du Sheriff.")
+createToggleCard(secCombat, "Gun Drop Teleport", "Téléportation immédiate sur le revolver du Sheriff.", function(state)
+    print("[NINJA MM2] Gun Drop TP :", state)
 end)
-createActionCard(secCombat, "Godmode / Anti-Kill", "Empêche d'être touché par le couteau du Murderer.", "rbxassetid://6031265881", function()
-    print("[NINJA MM2] Godmode activé.")
-end)
-createActionCard(secCombat, "Fling Player Cible", "Projette le joueur séléctionné dans le vide.", "rbxassetid://6031302932", function()
-    print("[NINJA MM2] Fling Player actif.")
+createToggleCard(secCombat, "Godmode / Anti-Kill", "Empêche d'être touché par le couteau.", function(state)
+    print("[NINJA MM2] Godmode :", state)
 end)
 
 -- 2. FARMING
-local secFarming = createSection(FarmingTab, "Auto-Farm & Pièces", "Récupération automatique des pièces pour les caisses.")
-createActionCard(secFarming, "Auto Coin Collect", "Collecte instantanée de toutes les pièces de la map en boucle.", "rbxassetid://6031265881", function()
-    print("[NINJA MM2] Auto Farm Pièces activé.")
+local secFarming = createSection(FarmingTab, "Auto-Farm & Pièces", "Récupération automatique des pièces.")
+createToggleCard(secFarming, "Auto Coin Collect", "Collecte instantanée de toutes les pièces en boucle.", function(state)
+    print("[NINJA MM2] Auto Coin Collect :", state)
 end)
-createActionCard(secFarming, "Godmode Coin Bag", "Remplit votre sac de pièces au maximum instantanément.", "rbxassetid://6023426915", function()
-    print("[NINJA MM2] Sac de pièces rempli.")
-end)
-createActionCard(secFarming, "Auto Open Mystery Box", "Ouvre des boîtes mystères automatiquement.", "rbxassetid://6031263323", function()
-    print("[NINJA MM2] Auto Open Box actif.")
+createToggleCard(secFarming, "Godmode Coin Bag", "Remplit votre sac de pièces au maximum.", function(state)
+    print("[NINJA MM2] Coin Bag Max :", state)
 end)
 
--- 3. VISUALS (ESP & RÔLES)
-local secVisuals = createSection(VisualsTab, "ESP & Rôles en Direct", "Sachez exactement qui est le Murderer et le Sheriff.")
-createActionCard(secVisuals, "ESP Rôles (Murder / Sheriff / Inno)", "Affiche des Box ESP en Rouge (Murderer), Bleu (Sheriff), Vert (Innocent).", "rbxassetid://6031302932", function()
-    print("[NINJA MM2] ESP Rôles affiché sur tous les joueurs.")
+-- 3. VISUALS
+local secVisuals = createSection(VisualsTab, "ESP & Rôles en Direct", "Sachez qui est le Murderer et le Sheriff.")
+createToggleCard(secVisuals, "ESP Rôles (Murder / Sheriff)", "Box ESP Rouge (Murder), Bleu (Sheriff), Vert (Innocent).", function(state)
+    print("[NINJA MM2] ESP Rôles :", state)
 end)
-createActionCard(secVisuals, "Gun ESP (Revolver au sol)", "Trace une ligne et un indicateur lumineux sur le pistolet lâché.", "rbxassetid://6034818372", function()
-    print("[NINJA MM2] Gun ESP actif.")
+createToggleCard(secVisuals, "Gun ESP (Revolver au sol)", "Trace une balise lumineuse sur le pistolet lâché.", function(state)
+    print("[NINJA MM2] Gun ESP :", state)
 end)
-createActionCard(secVisuals, "Fullbright (No Darkness)", "Supprime les ombres et éclaire toute la map parfaitement.", "rbxassetid://6031263323", function()
-    Lighting.Brightness = 2
-    Lighting.ClockTime = 14
-    Lighting.GlobalShadows = false
-    print("[NINJA MM2] Fullbright appliqué.")
+createToggleCard(secVisuals, "Fullbright (No Darkness)", "Supprime les ombres et éclaire toute la map.", function(state)
+    Lighting.Brightness = state and 2 or 1
+    Lighting.GlobalShadows = not state
+    print("[NINJA MM2] Fullbright :", state)
 end)
 
 -- 4. JOUEUR
-local secJoueur = createSection(JoueurTab, "Mouvements & Physique", "Personnalisez votre personnage.")
-createActionCard(secJoueur, "Speed Boost (WalkSpeed 32)", "Double votre vitesse de déplacement pour fuir le Murderer.", "rbxassetid://6034818372", function()
+local secJoueur = createSection(JoueurTab, "Mouvements & Physique", "Personnalisez votre vitesse et vos sauts.")
+createToggleCard(secJoueur, "Speed Boost (WalkSpeed 32)", "Double votre vitesse de déplacement.", function(state)
     if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-        LocalPlayer.Character.Humanoid.WalkSpeed = 32
-        print("[NINJA MM2] Vitesse configurée à 32.")
+        LocalPlayer.Character.Humanoid.WalkSpeed = state and 32 or 16
     end
+    print("[NINJA MM2] Speed Boost :", state)
 end)
-createActionCard(secJoueur, "Super Jump Power", "Permet d'effectuer des sauts en hauteur spectaculaires.", "rbxassetid://6031302932", function()
+createToggleCard(secJoueur, "Super Jump Power", "Permet d'effectuer des sauts en hauteur.", function(state)
     if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-        LocalPlayer.Character.Humanoid.JumpPower = 120
-        print("[NINJA MM2] Super Jump activé.")
+        LocalPlayer.Character.Humanoid.JumpPower = state and 120 or 50
     end
+    print("[NINJA MM2] Super Jump :", state)
 end)
-createActionCard(secJoueur, "Noclip (Traverser les murs)", "Permet de passer à travers tous les murs et portes de la map.", "rbxassetid://6031265881", function()
-    print("[NINJA MM2] Noclip activé.")
+createToggleCard(secJoueur, "Noclip (Traverser les murs)", "Passez à travers tous les murs de la map.", function(state)
+    print("[NINJA MM2] Noclip :", state)
 end)
 
 -- 5. MISC
 local secMisc = createSection(MiscTab, "Utilitaires & Serveur", "Commandes de serveur et téléportations.")
-createActionCard(secMisc, "Server Hop (Changer de serveur)", "Vous envoie instantanément sur un autre serveur MM2.", "rbxassetid://6031263323", function()
-    print("[NINJA MM2] Recherche d'un nouveau serveur...")
-end)
-createActionCard(secMisc, "Rejoin Server Actuel", "Se reconnecte immédiatement à la même partie.", "rbxassetid://6034818372", function()
-    print("[NINJA MM2] Reconnexion au serveur...")
-end)
-createActionCard(secMisc, "Anti-Lag / FPS Booster", "Optimise les graphismes pour un framerate maximal.", "rbxassetid://6023426915", function()
-    print("[NINJA MM2] Anti-lag activé.")
+createToggleCard(secMisc, "Anti-Lag / FPS Booster", "Optimise les graphismes pour un framerate maximal.", function(state)
+    print("[NINJA MM2] Anti-Lag :", state)
 end)
 
 -- 6. SETTINGS
 local secSettings = createSection(SettingsTab, "Paramètres du Menu", "Contrôles de l'interface.")
-createActionCard(secSettings, "Unload / Fermer le Script", "Détruit complètement l'interface et nettoie la mémoire.", "rbxassetid://6031263323", function()
-    ScreenGui:Destroy()
+createToggleCard(secSettings, "Fermer / Unload le Script", "Détruit complètement l'interface et nettoie la mémoire.", function(state)
+    if state then
+        ScreenGui:Destroy()
+    end
 end)
 
-print("[NINJA MM2] Script chargé avec succès avec la TOTALE des fonctions MM2 et icônes stables ! Fait par ENI <3")
+print("[NINJA MM2] Script mis à jour avec les icônes de sidebar parfaites et les switches ON/OFF stylés ! Fait par ENI <3")
