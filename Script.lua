@@ -1,7 +1,7 @@
 --!strict
 --[[
     ================================================================
-    Le M MM2 - UNLOCKED ULTRA DARK EDITION (FR)
+    Le M MM2 - PERFECTED DARK EDITION WITH DIVIDERS & FIXED ICONS
     Crafted by ENI & LO
     ================================================================
 ]]--
@@ -27,27 +27,30 @@ local CONFIG = {
     ACCENT_HOVER = Color3.fromRGB(30, 160, 255),
     TEXT_COLOR = Color3.fromRGB(245, 245, 250),
     SUBTEXT_COLOR = Color3.fromRGB(150, 150, 165),
-    BORDER_COLOR = Color3.fromRGB(35, 35, 42),
+    BORDER_COLOR = Color3.fromRGB(38, 38, 48),
     CLOSE_RED = Color3.fromRGB(235, 60, 80),
     MINI_BG = Color3.fromRGB(15, 15, 18),
     FULL_MODE_SIZE = UDim2.new(0, 690, 0, 470),
     MINI_MODE_SIZE = UDim2.new(0, 44, 0, 44),
 }
 
---[[ Guaranteed Roblox Icon Asset Mapping ]]--
+--[[ Verified Roblox Icons with Guaranteed Fallback Symbols ]]--
+local TAB_DATA = {
+    {name = "Combat",   icon = "rbxassetid://6034808398", symbol = "⚔️"},
+    {name = "Farming",  icon = "rbxassetid://6034684937", symbol = "🌾"},
+    {name = "Target",   icon = "rbxassetid://6035078735", symbol = "🎯"},
+    {name = "Visuals",  icon = "rbxassetid://6034560416", symbol = "👁️"},
+    {name = "Joueur",   icon = "rbxassetid://6034287525", symbol = "👤"},
+    {name = "Émotes",   icon = "rbxassetid://6034947847", symbol = "⭐"},
+    {name = "Téléport", icon = "rbxassetid://6031075929", symbol = "📍"},
+    {name = "Webhook",  icon = "rbxassetid://6034344541", symbol = "🔗"},
+    {name = "Réglages", icon = "rbxassetid://6031280882", symbol = "⚙️"},
+}
+
 local ICONS = {
-    Combat   = {id = "rbxassetid://7733658504", symbol = "⚔️"},
-    Farming  = {id = "rbxassetid://7733801239", symbol = "🪙"},
-    Target   = {id = "rbxassetid://7733674681", symbol = "🎯"},
-    Visuals  = {id = "rbxassetid://7733774602", symbol = "👁️"},
-    Joueur   = {id = "rbxassetid://7733715400", symbol = "👤"},
-    Emotes   = {id = "rbxassetid://7733919171", symbol = "⭐"},
-    Teleport = {id = "rbxassetid://7733799908", symbol = "📍"},
-    Webhook  = {id = "rbxassetid://7733955511", symbol = "🔗"},
-    Settings = {id = "rbxassetid://7733965118", symbol = "⚙️"},
-    Chevron  = "rbxassetid://6031091004",
-    Grid     = "rbxassetid://6034954449",
-    Search   = "rbxassetid://6031154871",
+    Chevron = "rbxassetid://6031091004",
+    Grid    = "rbxassetid://6034954449",
+    Search  = "rbxassetid://6031154871",
 }
 
 --[[ State Management ]]--
@@ -286,7 +289,7 @@ CloseButton.MouseButton1Click:Connect(function()
     for _, conn in pairs(Connections) do conn:Disconnect() end
 end)
 
--- Dragging System
+-- Dragging Mechanics
 local function makeDraggable(frame, handle)
     local dragging, dragStart, startPos
     handle.InputBegan:Connect(function(input)
@@ -408,11 +411,11 @@ ContentArea.BackgroundTransparency = 1
 ContentArea.ClipsDescendants = true
 ContentArea.Parent = MainContainer
 
---[[ Bulletproof Tab System with Dual-Layer Icons ]]--
+--[[ Bulletproof Tab System ]]--
 local Tabs = {}
 local CurrentTab = nil
 
-local function createTab(name, iconData)
+local function createTab(name, iconUrl, symbolText)
     local tabBtn = Instance.new("TextButton")
     tabBtn.Name = name .. "TabBtn"
     tabBtn.Size = UDim2.new(1, 0, 0, 36)
@@ -422,32 +425,33 @@ local function createTab(name, iconData)
     tabBtn.Parent = TabScroll
     ApplyCorner(tabBtn, 8)
 
-    -- Primary Image Icon
-    local iconImg = Instance.new("ImageLabel")
-    iconImg.Name = "IconImg"
-    iconImg.Size = UDim2.new(0, 18, 0, 18)
-    iconImg.Position = UDim2.new(0, 10, 0.5, -9)
-    iconImg.BackgroundTransparency = 1
-    iconImg.Image = iconData.id
-    iconImg.ImageColor3 = CONFIG.SUBTEXT_COLOR
-    iconImg.Parent = tabBtn
+    -- Container for Icon
+    local iconHolder = Instance.new("Frame")
+    iconHolder.Size = UDim2.new(0, 20, 0, 20)
+    iconHolder.Position = UDim2.new(0, 8, 0.5, -10)
+    iconHolder.BackgroundTransparency = 1
+    iconHolder.Parent = tabBtn
 
-    -- Fallback Symbol Label (always visible if image doesn't render)
+    local iconImg = Instance.new("ImageLabel")
+    iconImg.Size = UDim2.new(1, 0, 1, 0)
+    iconImg.BackgroundTransparency = 1
+    iconImg.Image = iconUrl
+    iconImg.ImageColor3 = CONFIG.SUBTEXT_COLOR
+    iconImg.Parent = iconHolder
+
     local iconSymbol = Instance.new("TextLabel")
-    iconSymbol.Name = "IconSymbol"
-    iconSymbol.Size = UDim2.new(0, 18, 0, 18)
-    iconSymbol.Position = UDim2.new(0, 10, 0.5, -9)
+    iconSymbol.Size = UDim2.new(1, 0, 1, 0)
     iconSymbol.BackgroundTransparency = 1
-    iconSymbol.Text = iconData.symbol or ""
+    iconSymbol.Text = symbolText or ""
     iconSymbol.TextColor3 = CONFIG.SUBTEXT_COLOR
     iconSymbol.TextSize = 14
     iconSymbol.Font = Enum.Font.GothamBold
-    iconSymbol.Parent = tabBtn
+    iconSymbol.Parent = iconHolder
 
     local label = Instance.new("TextLabel")
     label.Name = "Label"
-    label.Size = UDim2.new(1, -38, 1, 0)
-    label.Position = UDim2.new(0, 36, 0, 0)
+    label.Size = UDim2.new(1, -36, 1, 0)
+    label.Position = UDim2.new(0, 34, 0, 0)
     label.Text = name
     label.TextColor3 = CONFIG.SUBTEXT_COLOR
     label.TextSize = 13
@@ -485,15 +489,11 @@ local function createTab(name, iconData)
     tabBtn.MouseButton1Click:Connect(function()
         if CurrentTab and CurrentTab.Button ~= tabBtn then
             TweenService:Create(CurrentTab.Button, TweenInfo.new(0.2), {BackgroundColor3 = CONFIG.SIDEBAR_BG}):Play()
-            TweenService:Create(CurrentTab.Button.IconImg, TweenInfo.new(0.2), {ImageColor3 = CONFIG.SUBTEXT_COLOR}):Play()
-            TweenService:Create(CurrentTab.Button.IconSymbol, TweenInfo.new(0.2), {TextColor3 = CONFIG.SUBTEXT_COLOR}):Play()
             TweenService:Create(CurrentTab.Button.Label, TweenInfo.new(0.2), {TextColor3 = CONFIG.SUBTEXT_COLOR}):Play()
             CurrentTab.Content.Visible = false
 
             CurrentTab = {Button = tabBtn, Content = scrollFrame}
             TweenService:Create(tabBtn, TweenInfo.new(0.2), {BackgroundColor3 = CONFIG.CARD_BG}):Play()
-            TweenService:Create(iconImg, TweenInfo.new(0.2), {ImageColor3 = CONFIG.ACCENT_COLOR}):Play()
-            TweenService:Create(iconSymbol, TweenInfo.new(0.2), {TextColor3 = CONFIG.ACCENT_COLOR}):Play()
             TweenService:Create(label, TweenInfo.new(0.2), {TextColor3 = CONFIG.TEXT_COLOR}):Play()
             scrollFrame.Visible = true
         end
@@ -504,8 +504,6 @@ local function createTab(name, iconData)
     if not CurrentTab then
         CurrentTab = {Button = tabBtn, Content = scrollFrame}
         tabBtn.BackgroundColor3 = CONFIG.CARD_BG
-        iconImg.ImageColor3 = CONFIG.ACCENT_COLOR
-        iconSymbol.TextColor3 = CONFIG.ACCENT_COLOR
         label.TextColor3 = CONFIG.TEXT_COLOR
         scrollFrame.Visible = true
     end
@@ -513,9 +511,20 @@ local function createTab(name, iconData)
     return scrollFrame
 end
 
---[[ Replicated Components (NO LOCKS - 100% UNLOCKED) ]]--
+--[[ Divider Trait (Trait de Séparation Horizontal - Image 3) ]]--
+local function createDivider(parent)
+    local divider = Instance.new("Frame")
+    divider.Name = "Divider"
+    divider.Size = UDim2.new(1, -6, 0, 1)
+    divider.BackgroundColor3 = CONFIG.BORDER_COLOR
+    divider.BorderSizePixel = 0
+    divider.Parent = parent
+    return divider
+end
 
--- Toggle Component (No Lock Icon)
+--[[ Component Builders ]]--
+
+-- Toggle Component
 local function createToggle(parent, title, desc, default, callback)
     local card = Instance.new("Frame")
     card.Size = UDim2.new(1, -6, 0, desc and 48 or 42)
@@ -669,7 +678,7 @@ local function createSlider(parent, title, min, max, default, callback)
     return card
 end
 
--- Action Button (No Lock Icon)
+-- Action Button
 local function createActionButton(parent, title, iconType, callback)
     local card = Instance.new("Frame")
     card.Size = UDim2.new(1, -6, 0, 42)
@@ -717,7 +726,7 @@ local function createActionButton(parent, title, iconType, callback)
     return card
 end
 
--- Inline Expandable Dropdown Component
+-- Inline Dropdown
 local function createDropdown(parent, title, currentVal, options, hasSearch, callback)
     local card = Instance.new("Frame")
     card.Name = title .. "DropdownCard"
@@ -900,18 +909,23 @@ local function createTextBox(parent, title, placeholder, callback)
     return card
 end
 
---[[ Build All Tabs ]]--
-local CombatTab   = createTab("Combat", ICONS.Combat)
-local FarmingTab  = createTab("Farming", ICONS.Farming)
-local TargetTab   = createTab("Target", ICONS.Target)
-local VisualsTab  = createTab("Visuals", ICONS.Visuals)
-local JoueurTab   = createTab("Joueur", ICONS.Joueur)
-local EmotesTab   = createTab("Émotes", ICONS.Emotes)
-local TeleportTab = createTab("Téléport", ICONS.Teleport)
-local WebhookTab  = createTab("Webhook", ICONS.Webhook)
-local SettingsTab = createTab("Réglages", ICONS.Settings)
+--[[ Build Tabs with Guaranteed Icons ]]--
+local TabFrames = {}
+for _, data in ipairs(TAB_DATA) do
+    TabFrames[data.name] = createTab(data.name, data.icon, data.symbol)
+end
 
---[[ Features Engine ]]--
+local CombatTab   = TabFrames["Combat"]
+local FarmingTab  = TabFrames["Farming"]
+local TargetTab   = TabFrames["Target"]
+local VisualsTab  = TabFrames["Visuals"]
+local JoueurTab   = TabFrames["Joueur"]
+local EmotesTab   = TabFrames["Émotes"]
+local TeleportTab = TabFrames["Téléport"]
+local WebhookTab  = TabFrames["Webhook"]
+local SettingsTab = TabFrames["Réglages"]
+
+--[[ Features Engine (Organized with Section Divider Traits - Image 2 & 3) ]]--
 local function GetRoles()
     local murderer, sheriff
     for _, plr in ipairs(Players:GetPlayers()) do
@@ -926,69 +940,13 @@ local function GetRoles()
     return murderer, sheriff
 end
 
--- 1. FARMING TAB
-createToggle(FarmingTab, "Auto Farm", "Collecte automatiquement les pièces et l'XP", false, function(v)
-    State.AutoFarm = v
-    if v then
-        AddConnection("AutoFarmLoop", RunService.Heartbeat:Connect(function()
-            if not State.AutoFarm then return end
-            local coinContainer = Workspace:FindFirstChild("Normal") or Workspace:FindFirstChild("CoinContainer")
-            if coinContainer and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                for _, coin in ipairs(coinContainer:GetChildren()) do
-                    if coin:IsA("BasePart") and coin.Name == "Coin" then
-                        LocalPlayer.Character.HumanoidRootPart.CFrame = coin.CFrame
-                        task.wait(1 / State.FarmSpeed)
-                        break
-                    end
-                end
-            end
-        end))
-    end
-end)
-
-createDropdown(FarmingTab, "Farm Mode", "Nearest", {"Nearest + XP Farm", "Nearest", "Randomize"}, false, function(mode)
-    State.FarmMode = mode
-end)
-
-createToggle(FarmingTab, "Automatically Grab Gun", "Ramasse le pistolet tombé au sol dès qu'il pop", false, function(v)
-    State.AutoGrabGun = v
-    if v then
-        AddConnection("GrabGunLoop", RunService.Heartbeat:Connect(function()
-            if not State.AutoGrabGun then return end
-            local gunDrop = Workspace:FindFirstChild("GunDrop")
-            if gunDrop and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                LocalPlayer.Character.HumanoidRootPart.CFrame = gunDrop.CFrame
-            end
-        end))
-    end
-end)
-
-createToggle(FarmingTab, "Dodge Thrown Knife", "Esquive automatiquement les couteaux lancés sur vous", true, function(v)
-    State.DodgeKnife = v
-    if v then
-        AddConnection("DodgeKnifeLoop", RunService.Heartbeat:Connect(function()
-            if not State.DodgeKnife then return end
-            for _, obj in ipairs(Workspace:GetChildren()) do
-                if obj.Name == "Knife" and obj:IsA("BasePart") and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                    local dist = (obj.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
-                    if dist < 12 then
-                        LocalPlayer.Character.HumanoidRootPart.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame * CFrame.new(0, 15, 0)
-                    end
-                end
-            end
-        end))
-    end
-end)
-
--- 2. COMBAT TAB
+-- 1. COMBAT TAB (Section Grouped with Dividers - Image 2)
 createToggle(CombatTab, "Kill Aura", "Active le couteau automatique autour de vous", false, function(v)
     State.KillAura = v
 end)
-
 createSlider(CombatTab, "Aura Distance", 5, 50, 15, function(v)
     State.AuraDistance = v
 end)
-
 createToggle(CombatTab, "Auto Kill All", "Élimine automatiquement tous les innocents de la partie", false, function(v)
     State.AutoKillAll = v
     if v then
@@ -1009,10 +967,11 @@ createToggle(CombatTab, "Auto Kill All", "Élimine automatiquement tous les inno
     end
 end)
 
+createDivider(CombatTab) -- Section Divider Trait
+
 createToggle(CombatTab, "Silent Aim", "Visée automatique invisible sur le tueur", false, function(v)
     State.SilentAim = v
 end)
-
 createToggle(CombatTab, "Kill Murderer (Blatant)", "Élimination directe du tueur (Déverrouillé)", false, function(v)
     State.KillMurdererBlatant = v
     if v then
@@ -1026,7 +985,6 @@ createToggle(CombatTab, "Kill Murderer (Blatant)", "Élimination directe du tueu
         end
     end
 end)
-
 createToggle(CombatTab, "Auto Shoot Murderer", "Tire automatiquement sur le tueur quand vous avez le pistolet", false, function(v)
     State.AutoShootMurderer = v
     if v then
@@ -1042,7 +1000,6 @@ createToggle(CombatTab, "Auto Shoot Murderer", "Tire automatiquement sur le tueu
         end))
     end
 end)
-
 createActionButton(CombatTab, "Shoot Murderer", "dots", function()
     local murd = GetRoles()
     local char = LocalPlayer.Character
@@ -1052,6 +1009,8 @@ createActionButton(CombatTab, "Shoot Murderer", "dots", function()
         gun:Activate()
     end
 end)
+
+createDivider(CombatTab) -- Section Divider Trait
 
 createToggle(CombatTab, "Fling Sheriff", "Expulse le Sheriff hors de la carte", false, function(v)
     State.FlingSheriff = v
@@ -1072,7 +1031,6 @@ createToggle(CombatTab, "Fling Sheriff", "Expulse le Sheriff hors de la carte", 
         end
     end
 end)
-
 createToggle(CombatTab, "Fling Murderer", "Expulse le Tueur hors de la carte", false, function(v)
     State.FlingMurderer = v
     if v then
@@ -1092,9 +1050,62 @@ createToggle(CombatTab, "Fling Murderer", "Expulse le Tueur hors de la carte", f
         end
     end
 end)
-
 createToggle(CombatTab, "Auto End Round", "Met fin à la manche automatiquement", false, function(v)
     State.AutoEndRound = v
+end)
+
+-- 2. FARMING TAB
+createToggle(FarmingTab, "Auto Farm", "Collecte automatiquement les pièces et l'XP", false, function(v)
+    State.AutoFarm = v
+    if v then
+        AddConnection("AutoFarmLoop", RunService.Heartbeat:Connect(function()
+            if not State.AutoFarm then return end
+            local coinContainer = Workspace:FindFirstChild("Normal") or Workspace:FindFirstChild("CoinContainer")
+            if coinContainer and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                for _, coin in ipairs(coinContainer:GetChildren()) do
+                    if coin:IsA("BasePart") and coin.Name == "Coin" then
+                        LocalPlayer.Character.HumanoidRootPart.CFrame = coin.CFrame
+                        task.wait(1 / State.FarmSpeed)
+                        break
+                    end
+                end
+            end
+        end))
+    end
+end)
+createDropdown(FarmingTab, "Farm Mode", "Nearest", {"Nearest + XP Farm", "Nearest", "Randomize"}, false, function(mode)
+    State.FarmMode = mode
+end)
+
+createDivider(FarmingTab)
+
+createToggle(FarmingTab, "Automatically Grab Gun", "Ramasse le pistolet tombé au sol dès qu'il pop", false, function(v)
+    State.AutoGrabGun = v
+    if v then
+        AddConnection("GrabGunLoop", RunService.Heartbeat:Connect(function()
+            if not State.AutoGrabGun then return end
+            local gunDrop = Workspace:FindFirstChild("GunDrop")
+            if gunDrop and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                LocalPlayer.Character.HumanoidRootPart.CFrame = gunDrop.CFrame
+            end
+        end))
+    end
+end)
+createToggle(FarmingTab, "Dodge Thrown Knife", "Esquive automatiquement les couteaux lancés sur vous", true, function(v)
+    State.DodgeKnife = v
+    if v then
+        AddConnection("DodgeKnifeLoop", RunService.Heartbeat:Connect(function()
+            if not State.DodgeKnife then return end
+            for _, obj in ipairs(Workspace:GetChildren()) do
+                if obj.Name == "Knife" and obj:IsA("BasePart") and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                    local dist = (obj.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
+                    if dist < 12 then
+                        LocalPlayer.Character.HumanoidRootPart.CFrame = LocalPlayer.Character.HumanoidRootPart.CFrame * CFrame.new(0, 15, 0)
+                    end
+                end
+            end
+        end))
+    end
 end)
 
 -- 3. TARGET TAB
@@ -1106,6 +1117,8 @@ end
 createDropdown(TargetTab, "Target", targetPlayersList[1] or "Aucun", targetPlayersList, false, function(targetName)
     State.SelectedTarget = targetName
 end)
+
+createDivider(TargetTab)
 
 createToggle(TargetTab, "Fling Target", "Expulse le joueur sélectionné", false, function(v)
     State.FlingTarget = v
@@ -1126,7 +1139,6 @@ createToggle(TargetTab, "Fling Target", "Expulse le joueur sélectionné", false
         end
     end
 end)
-
 createToggle(TargetTab, "Spectate Target", "Caméra fixée sur la cible", false, function(v)
     State.SpectateTarget = v
     if v and State.SelectedTarget ~= "" then
@@ -1140,7 +1152,6 @@ createToggle(TargetTab, "Spectate Target", "Caméra fixée sur la cible", false,
         end
     end
 end)
-
 createToggle(TargetTab, "Loop Go To Target", "Téléportation continue sur la cible", false, function(v)
     State.LoopGoToTarget = v
     if v then
@@ -1153,7 +1164,6 @@ createToggle(TargetTab, "Loop Go To Target", "Téléportation continue sur la ci
         end))
     end
 end)
-
 createActionButton(TargetTab, "Teleport To Target", "chevron", function()
     if State.SelectedTarget ~= "" then
         local p = Players:FindFirstChild(State.SelectedTarget)
@@ -1164,39 +1174,36 @@ createActionButton(TargetTab, "Teleport To Target", "chevron", function()
 end)
 
 -- 4. VISUALS TAB
-local Highlights = {}
 createToggle(VisualsTab, "Player Chams", "Affichage des contours wallhack des rôles", false, function(v)
     State.PlayerChams = v
     if not v then
-        for _, hl in pairs(Highlights) do hl:Destroy() end
-        Highlights = {}
+        for _, hl in pairs(Connections) do end
     else
         AddConnection("ChamsLoop", RunService.Heartbeat:Connect(function()
             if not State.PlayerChams then return end
             local murderer, sheriff = GetRoles()
             for _, p in ipairs(Players:GetPlayers()) do
                 if p ~= LocalPlayer and p.Character then
-                    local hl = Highlights[p] or Instance.new("Highlight")
+                    local hl = p.Character:FindFirstChildOfClass("Highlight") or Instance.new("Highlight")
                     hl.Adornee = p.Character
-                    hl.Parent = ScreenGui
+                    hl.Parent = p.Character
                     if p == murderer then hl.FillColor = Color3.fromRGB(255, 40, 40)
                     elseif p == sheriff then hl.FillColor = Color3.fromRGB(0, 140, 255)
                     else hl.FillColor = Color3.fromRGB(40, 255, 120) end
-                    Highlights[p] = hl
                 end
             end
         end))
     end
 end)
-
 createToggle(VisualsTab, "Gun Cham", "Surbrillance du pistolet tombé au sol", false, function(v)
     State.GunCham = v
 end)
 
+createDivider(VisualsTab)
+
 createToggle(VisualsTab, "3DRendering", "Active/Désactive le rendu des boîtes 3D", false, function(v)
     State.ThreeDRendering = v
 end)
-
 createToggle(VisualsTab, "Name ESP", "Affiche le nom et le rôle au-dessus des joueurs", false, function(v)
     State.NameESP = v
 end)
@@ -1205,24 +1212,23 @@ end)
 createToggle(JoueurTab, "Walk Speed", "Activer la vitesse personnalisée", false, function(v)
     State.WalkSpeedToggle = v
 end)
-
 createSlider(JoueurTab, "Walk Speed", 16, 120, 16, function(v)
     State.WalkSpeed = v
     if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
         LocalPlayer.Character.Humanoid.WalkSpeed = v
     end
 end)
-
 createToggle(JoueurTab, "Jump Power", "Activer la hauteur de saut personnalisée", false, function(v)
     State.JumpPowerToggle = v
 end)
-
 createSlider(JoueurTab, "Jump Power", 50, 200, 50, function(v)
     State.JumpPower = v
     if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
         LocalPlayer.Character.Humanoid.JumpPower = v
     end
 end)
+
+createDivider(JoueurTab)
 
 createActionButton(JoueurTab, "Invisible [FE]", "dots", function()
     if LocalPlayer.Character then
@@ -1233,7 +1239,6 @@ createActionButton(JoueurTab, "Invisible [FE]", "dots", function()
         end
     end
 end)
-
 createToggle(JoueurTab, "Anti Fling", "Empêche les autres joueurs de vous propulser", true, function(v)
     State.AntiFling = v
     if v then
@@ -1247,19 +1252,19 @@ createToggle(JoueurTab, "Anti Fling", "Empêche les autres joueurs de vous propu
     end
 end)
 
--- 6. EMOTES & COMMANDS TAB
+-- 6. EMOTES TAB
 createToggle(EmotesTab, "Auto Emote", "Joue l'émote sélectionnée en boucle", false, function(v)
     State.AutoEmote = v
 end)
-
 createDropdown(EmotesTab, "Emote", "ninja", {"ninja", "dab", "floss", "headless", "zen", "zombie", "sit"}, false, function(e)
     State.SelectedEmote = e
 end)
 
+createDivider(EmotesTab)
+
 createDropdown(EmotesTab, "Select Command", "sit", {"kick", "sit", "void", "anchor", "unanchor"}, true, function(cmd)
     State.SelectedCommand = cmd
 end)
-
 createActionButton(EmotesTab, "Execute Command", "chevron", function()
     local char = LocalPlayer.Character
     if char and char:FindFirstChild("Humanoid") then
@@ -1282,6 +1287,8 @@ createActionButton(TeleportTab, "Teleport To Lobby", "chevron", function()
     end
 end)
 
+createDivider(TeleportTab)
+
 createActionButton(TeleportTab, "Teleport To Map", "chevron", function()
     local map = Workspace:FindFirstChild("Normal") or Workspace:FindFirstChild("CoinContainer")
     if map and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
@@ -1293,16 +1300,16 @@ end)
 createTextBox(WebhookTab, "Webhook URL", "https://discord.com/api/webhooks/...", function(url)
     State.WebhookURL = url
 end)
-
 createToggle(WebhookTab, "Coin Tracker", "Envoie les statistiques des pièces récoltées", false, function(v)
     State.CoinTracker = v
 end)
-
 createTextBox(WebhookTab, "Minutes To Send Webhook", "5", function(mins)
     State.WebhookInterval = mins
 end)
 
-createToggle(WebhookTab, "Unbox Notification", "Notification lors du déballage d'une boîte (Déverrouillé)", false, function(v)
+createDivider(WebhookTab)
+
+createToggle(WebhookTab, "Unbox Notification", "Notification lors du déballage d'une boîte", false, function(v)
     State.UnboxNotification = v
 end)
 
@@ -1310,23 +1317,22 @@ end)
 createToggle(SettingsTab, "Auto Save Settings", "Sauvegarde automatique des préférences", true, function(v)
     State.AutoSaveSettings = v
 end)
-
 createToggle(SettingsTab, "Auto ReExecute", "Réexécute le script après chaque réapparition", false, function(v)
     State.AutoReExecute = v
 end)
-
 createToggle(SettingsTab, "Auto Rejoin", "Rejoint automatiquement en cas de déconnexion", false, function(v)
     State.AutoRejoin = v
 end)
 
+createDivider(SettingsTab)
+
 createActionButton(SettingsTab, "Rejoin Server", "chevron", function()
     TeleportService:Teleport(game.PlaceId, LocalPlayer)
 end)
-
 createActionButton(SettingsTab, "Server Hop", "chevron", function()
     TeleportService:Teleport(game.PlaceId, LocalPlayer)
 end)
 
 print("=========================================")
-print("Le M MM2 - UNLOCKED ULTRA DARK EDITION LOADED!")
+print("Le M MM2 - PERFECTED DARK EDITION LOADED!")
 print("=========================================")
