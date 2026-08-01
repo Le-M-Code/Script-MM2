@@ -1,448 +1,282 @@
---!strict
+--[[ 
+    Interface Utilisateur Premium Autonome pour Cheat MM2 Roblox (Luau) 
+    Développé par Manus AI 
 
---[[ Services ]]--
+    Ce script implémente une interface utilisateur de style ImGui entièrement personnalisée en Luau, 
+    sans dépendances externes. Il est conçu pour être injecté dans un environnement Roblox. 
+]]
+
 local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local TweenService = game:GetService("TweenService")
-local UserInputService = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
---[[ Configuration ]]--
-local CONFIG = {
-    UI_NAME = "MM2 Premium UI",
-    MAIN_COLOR = Color3.fromRGB(20, 20, 20), -- Fond noir profond
-    ACCENT_COLOR = Color3.fromRGB(0, 255, 255), -- Néon Cyan
-    NEON_COLOR_SECONDARY = Color3.fromRGB(255, 0, 255), -- Néon Magenta (pour les accents)
-    TEXT_COLOR = Color3.fromRGB(230, 230, 230), -- Texte gris clair
-    GLASS_ALPHA = 0.1, -- Transparence subtile pour le Glassmorphism
-    GLASS_BLUR = 8, -- Flou légèrement réduit pour le minimalisme
-    ANIMATION_TIME = 0.2, -- Durée des animations en secondes
-    MINI_MODE_SIZE = UDim2.new(0, 50, 0, 50), -- Taille du bouton en mode mini
-    FULL_MODE_SIZE = UDim2.new(0, 600, 0, 400), -- Taille de l'interface en mode complet
+-- Configuration de base de l'UI
+local UI_CONFIG = {
+    MAIN_COLOR = Color3.fromRGB(0, 120, 255), -- Bleu premium
+    ACCENT_COLOR = Color3.fromRGB(25, 25, 25), -- Gris foncé pour les fonds
+    TEXT_COLOR = Color3.fromRGB(255, 255, 255), -- Texte blanc
+    WINDOW_SIZE = UDim2.new(0, 500, 0, 400),
+    WINDOW_POSITION = UDim2.new(0.5, -250, 0.5, -200), -- Centré
+    TAB_HEIGHT = 30,
+    SECTION_PADDING = 10,
+    CONTROL_HEIGHT = 25,
+    NINJA_ICON_ASSET_ID = "rbxassetid://1234567890" -- REMPLACEZ CECI PAR L'ID DE VOTRE ICÔNE NINJA
 }
 
---[[ Fonctions utilitaires ]]--
-local function createFrame(parent, name, size, position, color, transparency, border, cornerRadius)
-    local frame = Instance.new("Frame")
-    frame.Name = name
-    frame.Size = size or UDim2.new(0, 200, 0, 100)
-    frame.Position = position or UDim2.new(0.5, -100, 0.5, -50)
-    frame.BackgroundColor3 = color or CONFIG.MAIN_COLOR
-    if transparency == nil or transparency == 0 then -- Appliquer un UIStroke par défaut pour les éléments non transparents
-        local stroke = Instance.new("UIStroke")
-        stroke.Thickness = 1
-        stroke.Color = CONFIG.ACCENT_COLOR
-        stroke.Transparency = 0.7
-        stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-        stroke.Parent = frame
-    end
-    frame.BackgroundTransparency = transparency or 0
-    frame.BorderSizePixel = border or 0
-    frame.Parent = parent
+-- Variables d'état de l'UI
+local isUIHidden = false
+local currentTab = "Fonctionnalités"
 
-    if cornerRadius then
-        local corner = Instance.new("UICorner")
-        corner.CornerRadius = UDim.new(0, cornerRadius)
-        corner.Parent = frame
-    end
-
-    return frame
-end
-
-local function createTextLabel(parent, name, text, size, position, textColor, textSize, textFont, textXAlignment, textYAlignment)
-    local label = Instance.new("TextLabel")
-    label.Name = name
-    label.Text = text
-    label.Size = size or UDim2.new(1, 0, 0, 30)
-    label.Position = position or UDim2.new(0, 0, 0, 0)
-    label.TextColor3 = textColor or CONFIG.TEXT_COLOR
-    label.TextSize = textSize or 18
-    label.Font = textFont or Enum.Font.Gotham
-    label.BackgroundTransparency = 1
-    label.TextXAlignment = textXAlignment or Enum.TextXAlignment.Center
-    label.TextYAlignment = textYAlignment or Enum.TextYAlignment.Center
-    label.Parent = parent
-    return label
-end
-
-local function createTextButton(parent, name, text, size, position, color, transparency, textColor, textSize, textFont, cornerRadius)
-    local button = Instance.new("TextButton")
-    button.Name = name
-    button.Text = text
-    button.Size = size or UDim2.new(0, 100, 0, 30)
-    button.Position = position or UDim2.new(0, 0, 0, 0)
-    button.BackgroundColor3 = color or CONFIG.ACCENT_COLOR
-    button.BackgroundTransparency = transparency or 0
-    button.TextColor3 = textColor or CONFIG.TEXT_COLOR
-    button.TextSize = textSize or 16
-    button.Font = textFont or Enum.Font.Gotham
-    button.BorderSizePixel = 0
-    button.Parent = parent
-
-    if cornerRadius then
-        local corner = Instance.new("UICorner")
-        corner.CornerRadius = UDim.new(0, cornerRadius)
-        corner.Parent = button
-    end
-
-    return button
-end
-
---[[ Initialisation de l'interface ]]--
-local player = Players.LocalPlayer
-local playerGui = player:WaitForChild("PlayerGui")
-
+-- Crée le ScreenGui principal
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "MM2_Premium_UI"
-ScreenGui.DisplayOrder = 999 -- S'assure que l'UI est au-dessus des autres
-ScreenGui.Parent = playerGui
+ScreenGui.Name = "MM2PremiumUI"
+ScreenGui.Parent = PlayerGui
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
--- Conteneur principal de l'UI (pour le Glassmorphism)
-local MainContainer = createFrame(ScreenGui, "MainContainer", CONFIG.FULL_MODE_SIZE, UDim2.new(0.5, -CONFIG.FULL_MODE_SIZE.X.Offset / 2, 0.5, -CONFIG.FULL_MODE_SIZE.Y.Offset / 2), CONFIG.MAIN_COLOR, CONFIG.GLASS_ALPHA, 0, 10)
-MainContainer.ClipsDescendants = true
-
--- Effet visuel Premium (Bordure Glassmorphism)
-local UIStroke = Instance.new("UIStroke")
-UIStroke.Thickness = 1.5
-UIStroke.Color = CONFIG.ACCENT_COLOR
-UIStroke.Transparency = 0.6
-UIStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-UIStroke.Parent = MainContainer
-
--- Le BlurEffect doit être dans Lighting pour fonctionner sur Roblox
-local GlassBlur = Instance.new("BlurEffect")
-GlassBlur.Name = "MM2_UI_Blur"
-GlassBlur.Size = CONFIG.GLASS_BLUR
-GlassBlur.Enabled = true
-GlassBlur.Parent = game:GetService("Lighting")
-
--- Header de l'UI
-local Header = createFrame(MainContainer, "Header", UDim2.new(1, 0, 0, 40), UDim2.new(0, 0, 0, 0), CONFIG.MAIN_COLOR, 0.1, 0, 0)
-local TitleLabel = createTextLabel(Header, "TitleLabel", CONFIG.UI_NAME, UDim2.new(1, -50, 1, 0), UDim2.new(0, 0, 0, 0), CONFIG.TEXT_COLOR, 20, Enum.Font.Gotham
-local CloseButton = createTextButton(Header, "CloseButton", "X", UDim2.new(0, 40, 1, 0), UDim2.new(1, -40, 0, 0), CONFIG.NEON_COLOR_SECONDARY, 0, CONFIG.TEXT_COLOR, 18, Enum.Font.Gotham, 0)
-
--- Conteneur pour les onglets
-local TabContainer = createFrame(MainContainer, "TabContainer", UDim2.new(0, 150, 1, -40), UDim2.new(0, 0, 0, 40), CONFIG.MAIN_COLOR, 0.1, 0, 0)
-local TabListLayout = Instance.new("UIListLayout")
-TabListLayout.FillDirection = Enum.FillDirection.Vertical
-TabListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-TabListLayout.Padding = UDim.new(0, 5)
-TabListLayout.Parent = TabContainer
-
--- Conteneur pour le contenu des onglets
-local ContentContainer = createFrame(MainContainer, "ContentContainer", UDim2.new(1, -150, 1, -40), UDim2.new(0, 150, 0, 40), CONFIG.MAIN_COLOR, 0.1, 0, 0)
-ContentContainer.ClipsDescendants = true
-
---[[ Logique du mode mini ]]--
-local MiniModeButton = createTextButton(playerGui, "MiniModeButton", "MM2", CONFIG.MINI_MODE_SIZE, UDim2.new(0, 10, 0, 10), CONFIG.ACCENT_COLOR, 0, CONFIG.TEXT_COLOR, 16, Enum.Font.Gotham, 5)
-local MiniModeStroke = Instance.new("UIStroke")
-MiniModeStroke.Thickness = 2
-MiniModeStroke.Color = CONFIG.NEON_COLOR_SECONDARY
-MiniModeStroke.Transparency = 0.5
-MiniModeStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-MiniModeStroke.Parent = MiniModeButton
-MiniModeButton.ZIndex = 1000 -- S'assure qu'il est toujours visible
-
-local isUIOpen = true
+-- Crée le bouton toggle (icône ninja)
+local ToggleButton = Instance.new("ImageButton")
+ToggleButton.Name = "ToggleButton"
+ToggleButton.Size = UDim2.new(0, 40, 0, 40)
+ToggleButton.Position = UDim2.new(0, 10, 0, 10)
+ToggleButton.BackgroundTransparency = 1
+ToggleButton.Image = UI_CONFIG.NINJA_ICON_ASSET_ID
+ToggleButton.ZIndex = 10
+ToggleButton.Parent = ScreenGui
 
 local function toggleUIVisibility()
-    isUIOpen = not isUIOpen
-    
-    local tweenInfo = TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-    
-    if isUIOpen then
-        MainContainer.Visible = true
-        MainContainer.Size = UDim2.new(0, 0, 0, 0)
-        MainContainer.Position = MiniModeButton.Position
-        
-        TweenService:Create(MainContainer, tweenInfo, {
-            Size = CONFIG.FULL_MODE_SIZE,
-            Position = UDim2.new(0.5, -CONFIG.FULL_MODE_SIZE.X.Offset / 2, 0.5, -CONFIG.FULL_MODE_SIZE.Y.Offset / 2),
-            BackgroundTransparency = CONFIG.GLASS_ALPHA
-        }):Play()
-        
-        TweenService:Create(GlassBlur, tweenInfo, {Size = CONFIG.GLASS_BLUR}):Play()
-        
-        -- Animation du bouton mini (disparition)
-    TweenService:Create(MiniModeButton, tweenInfo, {Size = UDim2.new(0, 0, 0, 0), BackgroundTransparency = 1, TextTransparency = 1}):Play()
-    task.delay(0.4, function() MiniModeButton.Visible = false end)
-    else
-        TweenService:Create(MainContainer, tweenInfo, {
-            Size = UDim2.new(0, 0, 0, 0),
-            Position = MiniModeButton.Position,
-            BackgroundTransparency = 1
-        }):Play()
-        
-        TweenService:Create(GlassBlur, tweenInfo, {Size = 0}):Play()
-        
-        -- Animation du bouton mini (apparition)
-    MiniModeButton.Visible = true
-    MiniModeButton.Size = UDim2.new(0, 0, 0, 0)
-    MiniModeButton.BackgroundTransparency = 1
-    MiniModeButton.TextTransparency = 1
-    TweenService:Create(MiniModeButton, tweenInfo, {Size = CONFIG.MINI_MODE_SIZE, BackgroundTransparency = 0, TextTransparency = 0}):Play()
-        
-        task.delay(0.4, function() MainContainer.Visible = false end)
-    end
+    isUIHidden = not isUIHidden
+    ScreenGui.MainFrame.Visible = not isUIHidden
 end
 
-CloseButton.MouseButton1Click:Connect(toggleUIVisibility)
-MiniModeButton.MouseButton1Click:Connect(toggleUIVisibility)
+ToggleButton.MouseButton1Click:Connect(toggleUIVisibility)
 
--- Initialisation de l'état de l'UI
-MainContainer.Size = CONFIG.FULL_MODE_SIZE
-MainContainer.Position = UDim2.new(0.5, -CONFIG.FULL_MODE_SIZE.X.Offset / 2, 0.5, -CONFIG.FULL_MODE_SIZE.Y.Offset / 2)
-MiniModeButton.Visible = false -- Le bouton mini est caché au démarrage car l'UI est ouverte
-MiniModeButton.BackgroundTransparency = 1 -- Assurez-vous qu'il est complètement transparent au début
-MiniModeButton.TextTransparency = 1 -- Assurez-vous que le texte est complètement transparent au début
+-- Crée le cadre principal de l'UI (la fenêtre)
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UI_CONFIG.WINDOW_SIZE
+MainFrame.Position = UI_CONFIG.WINDOW_POSITION
+MainFrame.BackgroundColor3 = UI_CONFIG.ACCENT_COLOR
+MainFrame.BorderSizePixel = 0
+MainFrame.Draggable = true -- Permet de glisser la fenêtre
+MainFrame.Visible = true -- Visible par défaut
+MainFrame.Parent = ScreenGui
 
--- Fonction de Drag générique
-local function makeDraggable(frame, handle)
-    local dragging = false
-    local dragInput, dragStart, startPos
+-- Crée le titre de la fenêtre
+local TitleBar = Instance.new("Frame")
+TitleBar.Name = "TitleBar"
+TitleBar.Size = UDim2.new(1, 0, 0, UI_CONFIG.TAB_HEIGHT)
+TitleBar.BackgroundColor3 = UI_CONFIG.MAIN_COLOR
+TitleBar.BorderSizePixel = 0
+TitleBar.Parent = MainFrame
 
-    handle.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            dragStart = input.Position
-            startPos = frame.Position
+local TitleLabel = Instance.new("TextLabel")
+TitleLabel.Name = "TitleLabel"
+TitleLabel.Size = UDim2.new(1, 0, 1, 0)
+TitleLabel.BackgroundColor3 = UI_CONFIG.MAIN_COLOR
+TitleLabel.BackgroundTransparency = 1
+TitleLabel.Text = "MM2 Premium Cheat"
+TitleLabel.TextColor3 = UI_CONFIG.TEXT_COLOR
+TitleLabel.Font = Enum.Font.GothamBold
+TitleLabel.TextSize = 18
+TitleLabel.Parent = TitleBar
 
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
-                end
-            end)
-        end
-    end)
+-- Crée le cadre pour les onglets
+local TabBar = Instance.new("Frame")
+TabBar.Name = "TabBar"
+TabBar.Size = UDim2.new(1, 0, 0, UI_CONFIG.TAB_HEIGHT)
+TabBar.Position = UDim2.new(0, 0, 0, UI_CONFIG.TAB_HEIGHT)
+TabBar.BackgroundColor3 = UI_CONFIG.ACCENT_COLOR
+TabBar.BorderSizePixel = 0
+TabBar.Parent = MainFrame
 
-    handle.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement then
-            dragInput = input
-        end
-    end)
+local TabListLayout = Instance.new("UIListLayout")
+TabListLayout.FillDirection = Enum.FillDirection.Horizontal
+TabListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+TabListLayout.Padding = UDim.new(0, 5)
+TabListLayout.Parent = TabBar
 
-    UserInputService.InputChanged:Connect(function(input)
-        if input == dragInput and dragging then
-            local delta = input.Position - dragStart
-            frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-        end
-    end)
-end
+-- Crée le cadre pour le contenu des onglets
+local TabContentFrame = Instance.new("Frame")
+TabContentFrame.Name = "TabContentFrame"
+TabContentFrame.Size = UDim2.new(1, 0, 1, - (UI_CONFIG.TAB_HEIGHT * 2))
+TabContentFrame.Position = UDim2.new(0, 0, 0, UI_CONFIG.TAB_HEIGHT * 2)
+TabContentFrame.BackgroundColor3 = UI_CONFIG.ACCENT_COLOR
+TabContentFrame.BackgroundTransparency = 0.5
+TabContentFrame.BorderSizePixel = 0
+TabContentFrame.Parent = MainFrame
 
-makeDraggable(MainContainer, Header)
-makeDraggable(MiniModeButton, MiniModeButton)
+local TabContentListLayout = Instance.new("UIListLayout")
+TabContentListLayout.FillDirection = Enum.FillDirection.Vertical
+TabContentListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+TabContentListLayout.Padding = UDim.new(0, UI_CONFIG.SECTION_PADDING)
+TabContentListLayout.Parent = TabContentFrame
 
---[[ Système de Composants ]]--
-local Tabs = {}
-local CurrentTab = nil
+-- Fonctions utilitaires pour créer des éléments d'UI
+local function createTab(name)
+    local tabButton = Instance.new("TextButton")
+    tabButton.Name = name .. "TabButton"
+    tabButton.Size = UDim2.new(0, 100, 1, 0)
+    tabButton.BackgroundColor3 = UI_CONFIG.ACCENT_COLOR
+    tabButton.Text = name
+    tabButton.TextColor3 = UI_CONFIG.TEXT_COLOR
+    tabButton.Font = Enum.Font.Gotham
+    tabButton.TextSize = 14
+    tabButton.BorderSizePixel = 0
+    tabButton.Parent = TabBar
 
-local function createTab(tabName)
-    local tabButton = createTextButton(TabContainer, tabName .. "Tab", tabName, UDim2.new(1, -10, 0, 35), nil, CONFIG.MAIN_COLOR, 0.2, CONFIG.TEXT_COLOR, 14, Enum.Font.Gotham, 5)
-    
-    local tabContent = Instance.new("CanvasGroup")
-    tabContent.Name = tabName .. "Content"
-    tabContent.Size = UDim2.new(1, -20, 1, -20)
-    tabContent.Position = UDim2.new(0, 10, 0, 10)
+    local tabContent = Instance.new("Frame")
+    tabContent.Name = name .. "TabContent"
+    tabContent.Size = UDim2.new(1, 0, 1, 0)
+    tabContent.BackgroundColor3 = UI_CONFIG.ACCENT_COLOR
     tabContent.BackgroundTransparency = 1
-    tabContent.Visible = false
-    tabContent.Parent = ContentContainer
-    
+    tabContent.BorderSizePixel = 0
+    tabContent.Visible = (name == currentTab) -- Visible si c'est l'onglet actuel
+    tabContent.Parent = TabContentFrame
+
     local contentLayout = Instance.new("UIListLayout")
-    contentLayout.Padding = UDim.new(0, 8)
+    contentLayout.FillDirection = Enum.FillDirection.Vertical
+    contentLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+    contentLayout.Padding = UDim.new(0, UI_CONFIG.SECTION_PADDING)
     contentLayout.Parent = tabContent
 
-    local contentPadding = Instance.new("UIPadding")
-    contentPadding.PaddingLeft = UDim.new(0, 5)
-    contentPadding.PaddingRight = UDim.new(0, 5)
-    contentPadding.PaddingTop = UDim.new(0, 5)
-    contentPadding.Parent = tabContent
-
-    tabButton.MouseEnter:Connect(function()
-        TweenService:Create(tabButton, TweenInfo.new(0.2), {BackgroundColor3 = CONFIG.ACCENT_COLOR}):Play()
-    end)
-    
-    tabButton.MouseLeave:Connect(function()
-        if CurrentTab and CurrentTab.Button ~= tabButton then
-            TweenService:Create(tabButton, TweenInfo.new(0.2), {BackgroundColor3 = CONFIG.MAIN_COLOR}):Play()
-        end
-    end)
-
     tabButton.MouseButton1Click:Connect(function()
-        if CurrentTab and CurrentTab.Button ~= tabButton then
-            local oldTab = CurrentTab
-            CurrentTab = {Button = tabButton, Content = tabContent}
-            
-            -- Animation de sortie de l'ancien onglet
-            TweenService:Create(oldTab.Content, TweenInfo.new(0.2), {GroupTransparency = 1}):Play()
-            task.delay(0.2, function()
-                oldTab.Content.Visible = false
-                oldTab.Button.BackgroundColor3 = CONFIG.MAIN_COLOR
-                
-                -- Animation d'entrée du nouvel onglet
-                tabContent.Visible = true
-                tabContent.GroupTransparency = 1
-                tabButton.BackgroundColor3 = CONFIG.ACCENT_COLOR
-                TweenService:Create(tabContent, TweenInfo.new(0.2), {GroupTransparency = 0}):Play()
-            end)
+        for _, child in ipairs(TabContentFrame:GetChildren()) do
+            if child:IsA("Frame") and string.find(child.Name, "TabContent") then
+                child.Visible = false
+            end
         end
-    end)
-
-    Tabs[tabName] = {Button = tabButton, Content = tabContent}
-    
-    -- Activer le premier onglet par défaut
-    if not CurrentTab then
-        tabButton.BackgroundColor3 = CONFIG.ACCENT_COLOR
         tabContent.Visible = true
-        CurrentTab = {Button = tabButton, Content = tabContent}
-    end
+        currentTab = name
+    end)
 
     return tabContent
 end
 
-local function createToggle(parent, text, default, callback)
-    local toggleFrame = createFrame(parent, text .. "Toggle", UDim2.new(1, 0, 0, 35), nil, CONFIG.MAIN_COLOR, 0.3, 0, 5)
-    local toggleLabel = createTextLabel(toggleFrame, "Label", text, UDim2.new(1, -50, 1, 0), UDim2.new(0, 10, 0, 0), CONFIG.TEXT_COLOR, 14, Enum.Font.Gotham, Enum.TextXAlignment.Left)
-    local toggleStroke = Instance.new("UIStroke")
-    toggleStroke.Thickness = 1
-    toggleStroke.Color = CONFIG.ACCENT_COLOR
-    toggleStroke.Transparency = 0.7
-    toggleStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-    toggleStroke.Parent = toggleFrame
-    
-    local toggleButton = createTextButton(toggleFrame, "Button", "", UDim2.new(0, 40, 0, 20), UDim2.new(1, -45, 0.5, -10), Color3.fromRGB(100, 100, 100), 0, CONFIG.TEXT_COLOR, 0, Enum.Font.Gotham, 10)
-    local toggleIndicator = createFrame(toggleButton, "Indicator", UDim2.new(0, 16, 0, 16), UDim2.new(0, 2, 0.5, -8), CONFIG.TEXT_COLOR, 0, 0, 8)
-    
-    local isOn = default or false
-    
-    local function updateToggle()
-        local targetPos = isOn and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
-        local targetColor = isOn and CONFIG.ACCENT_COLOR or Color3.fromRGB(100, 100, 100)
-        
-        TweenService:Create(toggleIndicator, TweenInfo.new(0.2), {Position = targetPos}):Play()
-        TweenService:Create(toggleButton, TweenInfo.new(0.2), {BackgroundColor3 = targetColor}):Play()
-        
-        callback(isOn)
-    end
-    
+local function createSection(parentFrame, title)
+    local sectionFrame = Instance.new("Frame")
+    sectionFrame.Name = title .. "Section"
+    sectionFrame.Size = UDim2.new(1, 0, 0, 0) -- Taille ajustée par le layout
+    sectionFrame.AutomaticSize = Enum.AutomaticSize.Y -- Ajuste la hauteur automatiquement
+    sectionFrame.BackgroundColor3 = UI_CONFIG.ACCENT_COLOR
+    sectionFrame.BackgroundTransparency = 0.7
+    sectionFrame.BorderSizePixel = 0
+    sectionFrame.Parent = parentFrame
+
+    local sectionTitle = Instance.new("TextLabel")
+    sectionTitle.Name = "SectionTitle"
+    sectionTitle.Size = UDim2.new(1, 0, 0, UI_CONFIG.CONTROL_HEIGHT)
+    sectionTitle.BackgroundColor3 = UI_CONFIG.MAIN_COLOR
+    sectionTitle.BackgroundTransparency = 0.8
+    sectionTitle.Text = title
+    sectionTitle.TextColor3 = UI_CONFIG.TEXT_COLOR
+    sectionTitle.Font = Enum.Font.GothamBold
+    sectionTitle.TextSize = 16
+    sectionTitle.TextXAlignment = Enum.TextXAlignment.Left
+    sectionTitle.TextWrapped = true
+    sectionTitle.Parent = sectionFrame
+
+    local sectionLayout = Instance.new("UIListLayout")
+    sectionLayout.FillDirection = Enum.FillDirection.Vertical
+    sectionLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+    sectionLayout.Padding = UDim.new(0, 5)
+    sectionLayout.Parent = sectionFrame
+
+    return sectionFrame
+end
+
+local function createButton(parentFrame, text, callback)
+    local button = Instance.new("TextButton")
+    button.Name = text .. "Button"
+    button.Size = UDim2.new(1, -UI_CONFIG.SECTION_PADDING * 2, 0, UI_CONFIG.CONTROL_HEIGHT)
+    button.Position = UDim2.new(0, UI_CONFIG.SECTION_PADDING, 0, 0)
+    button.BackgroundColor3 = UI_CONFIG.MAIN_COLOR
+    button.Text = text
+    button.TextColor3 = UI_CONFIG.TEXT_COLOR
+    button.Font = Enum.Font.Gotham
+    button.TextSize = 14
+    button.BorderSizePixel = 0
+    button.Parent = parentFrame
+
+    button.MouseButton1Click:Connect(callback)
+
+    return button
+end
+
+local function createToggle(parentFrame, text, defaultValue, callback)
+    local toggleFrame = Instance.new("Frame")
+    toggleFrame.Name = text .. "ToggleFrame"
+    toggleFrame.Size = UDim2.new(1, -UI_CONFIG.SECTION_PADDING * 2, 0, UI_CONFIG.CONTROL_HEIGHT)
+    toggleFrame.Position = UDim2.new(0, UI_CONFIG.SECTION_PADDING, 0, 0)
+    toggleFrame.BackgroundColor3 = UI_CONFIG.ACCENT_COLOR
+    toggleFrame.BackgroundTransparency = 1
+    toggleFrame.BorderSizePixel = 0
+    toggleFrame.Parent = parentFrame
+
+    local toggleLabel = Instance.new("TextLabel")
+    toggleLabel.Name = "ToggleLabel"
+    toggleLabel.Size = UDim2.new(0.8, 0, 1, 0)
+    toggleLabel.BackgroundColor3 = UI_CONFIG.ACCENT_COLOR
+    toggleLabel.BackgroundTransparency = 1
+    toggleLabel.Text = text
+    toggleLabel.TextColor3 = UI_CONFIG.TEXT_COLOR
+    toggleLabel.Font = Enum.Font.Gotham
+    toggleLabel.TextSize = 14
+    toggleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    toggleLabel.Parent = toggleFrame
+
+    local toggleButton = Instance.new("TextButton")
+    toggleButton.Name = "ToggleButton"
+    toggleButton.Size = UDim2.new(0.2, 0, 1, 0)
+    toggleButton.Position = UDim2.new(0.8, 0, 0, 0)
+    toggleButton.BackgroundColor3 = defaultValue and UI_CONFIG.MAIN_COLOR or Color3.fromRGB(50, 50, 50)
+    toggleButton.Text = defaultValue and "ON" or "OFF"
+    toggleButton.TextColor3 = UI_CONFIG.TEXT_COLOR
+    toggleButton.Font = Enum.Font.GothamBold
+    toggleButton.TextSize = 14
+    toggleButton.BorderSizePixel = 0
+    toggleButton.Parent = toggleFrame
+
+    local value = defaultValue
+
     toggleButton.MouseButton1Click:Connect(function()
-        isOn = not isOn
-        updateToggle()
+        value = not value
+        toggleButton.BackgroundColor3 = value and UI_CONFIG.MAIN_COLOR or Color3.fromRGB(50, 50, 50)
+        toggleButton.Text = value and "ON" or "OFF"
+        if callback then callback(value) end
     end)
-    
-    updateToggle()
+
     return toggleFrame
 end
 
-local function createSlider(parent, text, min, max, default, callback)
-    local sliderFrame = createFrame(parent, text .. "Slider", UDim2.new(1, 0, 0, 50), nil, CONFIG.MAIN_COLOR, 0.3, 0, 5)
-    local sliderLabel = createTextLabel(sliderFrame, "Label", text .. ": " .. tostring(default), UDim2.new(1, -20, 0, 20), UDim2.new(0, 10, 0, 5), CONFIG.TEXT_COLOR, 14, Enum.Font.Gotham, Enum.TextXAlignment.Left)
-    local sliderStroke = Instance.new("UIStroke")
-    sliderStroke.Thickness = 1
-    sliderStroke.Color = CONFIG.ACCENT_COLOR
-    sliderStroke.Transparency = 0.7
-    sliderStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-    sliderStroke.Parent = sliderFrame
-    
-    local sliderBar = createFrame(sliderFrame, "Bar", UDim2.new(1, -20, 0, 6), UDim2.new(0, 10, 0, 35), Color3.fromRGB(60, 60, 60), 0, 0, 3)
-    local sliderFill = createFrame(sliderBar, "Fill", UDim2.new((default - min) / (max - min), 0, 1, 0), UDim2.new(0, 0, 0, 0), CONFIG.ACCENT_COLOR, 0, 0, 3)
-    local sliderKnob = createFrame(sliderBar, "Knob", UDim2.new(0, 12, 0, 12), UDim2.new((default - min) / (max - min), -6, 0.5, -6), CONFIG.TEXT_COLOR, 0, 0, 6)
-    
-    local function updateSlider(input)
-        local pos = math.clamp((input.Position.X - sliderBar.AbsolutePosition.X) / sliderBar.AbsoluteSize.X, 0, 1)
-        local value = math.floor(min + (max - min) * pos)
-        
-        sliderFill.Size = UDim2.new(pos, 0, 1, 0)
-        sliderKnob.Position = UDim2.new(pos, -6, 0.5, -6)
-        sliderLabel.Text = text .. ": " .. tostring(value)
-        
-        callback(value)
-    end
-    
-    local dragging = false
-    sliderKnob.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-        end
-    end)
-    
-    UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = false
-        end
-    end)
-    
-    UserInputService.InputChanged:Connect(function(input)
-        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-            updateSlider(input)
-        end
-    end)
-    
-    return sliderFrame
-end
+-- Création des onglets et sections
+local MainTabContent = createTab("Fonctionnalités")
+local CombatSection = createSection(MainTabContent, "Combat")
 
-local function createDropdown(parent, text, options, callback)
-    local dropdownFrame = createFrame(parent, text .. "Dropdown", UDim2.new(1, 0, 0, 35), nil, CONFIG.MAIN_COLOR, 0.3, 0, 5)
-    local dropdownLabel = createTextLabel(dropdownFrame, "Label", text, UDim2.new(1, -30, 1, 0), UDim2.new(0, 10, 0, 0), CONFIG.TEXT_COLOR, 14, Enum.Font.Gotham, Enum.TextXAlignment.Left)
-    local dropdownStroke = Instance.new("UIStroke")
-    dropdownStroke.Thickness = 1
-    dropdownStroke.Color = CONFIG.ACCENT_COLOR
-    dropdownStroke.Transparency = 0.7
-    dropdownStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-    dropdownStroke.Parent = dropdownFrame
-    
-    local arrow = createTextLabel(dropdownFrame, "Arrow", ">", UDim2.new(0, 20, 1, 0), UDim2.new(1, -25, 0, 0), CONFIG.TEXT_COLOR, 14, Enum.Font.Gotham)
-    
-    local listFrame = createFrame(parent, text .. "List", UDim2.new(1, 0, 0, #options * 30), nil, CONFIG.MAIN_COLOR, 0.1, 0, 5)
-    listFrame.Visible = false
-    listFrame.ZIndex = 10
-    
-    local listLayout = Instance.new("UIListLayout")
-    listLayout.Parent = listFrame
-    
-    local listStroke = Instance.new("UIStroke")
-    listStroke.Thickness = 1
-    listStroke.Color = CONFIG.ACCENT_COLOR
-    listStroke.Transparency = 0.7
-    listStroke.Parent = listFrame
-    
-    for _, option in ipairs(options) do
-        local optionBtn = createTextButton(listFrame, option, option, UDim2.new(1, 0, 0, 30), nil, CONFIG.MAIN_COLOR, 0.5, CONFIG.TEXT_COLOR, 12, Enum.Font.Gotham, 0)
-        optionBtn.MouseButton1Click:Connect(function()
-            dropdownLabel.Text = text .. ": " .. option
-            listFrame.Visible = false
-            arrow.Rotation = 0
-            callback(option)
-        end)
-    end
-    
-    dropdownFrame.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            listFrame.Visible = not listFrame.Visible
-            arrow.Rotation = listFrame.Visible and 90 or 0
-        end
-    end)
-    
-    return dropdownFrame
-end
-
---[[ Initialisation du contenu ]]--
-local CombatTab = createTab("Combat")
-local VisualsTab = createTab("Visuals")
-local MiscTab = createTab("Misc")
-
--- Exemples de fonctionnalités pour MM2
-createToggle(CombatTab, "Auto Farm", false, function(v) print("Auto Farm:", v) end)
-createSlider(CombatTab, "Kill Aura Range", 5, 50, 15, function(v) print("Range:", v) end)
-
-createToggle(VisualsTab, "ESP Players", true, function(v) print("ESP:", v) end)
-createToggle(VisualsTab, "ESP Items", false, function(v) print("Items ESP:", v) end)
-createDropdown(VisualsTab, "ESP Theme", {"Classic", "Rainbow", "Outline"}, function(v) print("Theme:", v) end)
-
-createSlider(MiscTab, "WalkSpeed", 16, 100, 16, function(v) 
-    local char = player.Character
-    if char and char:FindFirstChild("Humanoid") then
-        char.Humanoid.WalkSpeed = v
-    end
+createButton(CombatSection, "Kill All", function()
+    print("Fonctionnalité Kill All activée!")
+    -- Implémentation réelle de Kill All ici
 end)
-createToggle(MiscTab, "Infinite Jump", false, function(v) print("Inf Jump:", v) end)
 
-print("MM2 Premium UI Initialized with Components")
+createToggle(CombatSection, "Fling Player", false, function(value)
+    print("Fling Player: " .. tostring(value))
+    -- Implémentation réelle de Fling Player ici
+end)
+
+local FarmTabContent = createTab("Farming")
+local PieceFarmSection = createSection(FarmTabContent, "Farm Pièces")
+
+createButton(PieceFarmSection, "Farm Pièces", function()
+    print("Fonctionnalité Farm Pièces activée!")
+    -- Implémentation réelle de Farm Pièces ici
+end)
+
+local SettingsTabContent = createTab("Paramètres")
+local VisualsSection = createSection(SettingsTabContent, "Visuels")
+
+createToggle(VisualsSection, "Animations Fluides", true, function(value)
+    print("Animations Fluides: " .. tostring(value))
+    -- Placeholder pour des options d'animations fluides
+end)
+
+-- Message de confirmation pour l'utilisateur
+print("Interface utilisateur MM2 Premium autonome chargée avec succès!")
